@@ -23,72 +23,69 @@
 
 > ออกแบบ interface จำลอง Internet Explorer 5 Browser บน Windows 98
 
-- [ ] **สร้าง Theme Provider** (`src/presentation/providers/ThemeProvider.tsx`)
+- [x] **สร้าง Theme Provider** (`src/presentation/providers/ThemeProvider.tsx`) ✅
 
-  - [ ] ติดตั้ง next-themes สำหรับ dark/light mode
-  - [ ] สร้าง ThemeProvider wrapper component
+  - [x] ติดตั้ง next-themes สำหรับ dark/light mode
+  - [x] สร้าง ThemeProvider wrapper component
 
-- [ ] **สร้าง MainLayout Component** (`src/presentation/components/layout/MainLayout.tsx`)
+- [x] **สร้าง MainLayout Component** (`src/presentation/components/layout/MainLayout.tsx`) ✅
 
-  - [ ] IE5 Title Bar (พร้อมปุ่ม minimize, maximize, close)
-  - [ ] IE5 Menu Bar (File, Edit, View, Favorites, Tools, Help)
-  - [ ] IE5 Toolbar (Back, Forward, Stop, Refresh, Home, Search, Favorites, History, Mail, Print)
-  - [ ] IE5 Address Bar (พร้อม Go button และ Links dropdown)
-  - [ ] Main Content Area (สำหรับ children)
-  - [ ] IE5 Status Bar (พร้อม progress indicator)
+  - [x] IE5 Title Bar (พร้อมปุ่ม minimize, maximize, close)
+  - [x] IE5 Menu Bar (File, Edit, View, Favorites, Tools, Help)
+  - [x] IE5 Toolbar (Back, Forward, Stop, Refresh, Home, Search, Favorites, History, Mail, Print)
+  - [x] IE5 Address Bar (พร้อม Go button และ Links dropdown)
+  - [x] Main Content Area (สำหรับ children)
+  - [x] IE5 Status Bar (พร้อม progress indicator)
   - [ ] Sidebar Navigation (เหมือน Wikipedia/Explorer sidebar)
 
-- [ ] **สร้าง Header Component** (`src/presentation/components/layout/Header.tsx`)
+- [x] **สร้าง Header Component** (`src/presentation/components/layout/Header.tsx`) ✅
 
-  - [ ] IE5 style toolbar buttons
-  - [ ] Theme Toggle button (Dark/Light mode)
-  - [ ] Pixel art icons
+  - [x] IE5 style toolbar buttons
+  - [x] Theme Toggle button (Dark/Light mode)
+  - [x] Pixel art icons
 
-- [ ] **สร้าง Footer Component** (`src/presentation/components/layout/Footer.tsx`)
+- [x] **สร้าง Footer Component** (`src/presentation/components/layout/Footer.tsx`) ✅
 
-  - [ ] IE5 Status Bar style
-  - [ ] Connection status indicator
-  - [ ] Internet zone indicator
+  - [x] IE5 Status Bar style
+  - [x] Connection status indicator
+  - [x] Internet zone indicator
 
-- [ ] **สร้าง Retro Pixel Art CSS/Styling**
-  - [ ] Windows 98 color palette
-  - [ ] Pixel art borders (3D beveled edges)
-  - [ ] Retro fonts (MS Sans Serif style)
-  - [ ] Button styles (pressed/hover states)
+- [x] **สร้าง Retro Pixel Art CSS/Styling** ✅
+  - [x] Windows 98 color palette
+  - [x] Pixel art borders (3D beveled edges)
+  - [x] Retro fonts (MS Sans Serif style)
+  - [x] Button styles (pressed/hover states)
 
 ### 1.2 👤 User System (Local Storage Only)
 
 > ไม่ต้อง login - สร้าง user เก็บลง local ด้วย zustand persist
 
-- [ ] **สร้าง User Store** (`src/presentation/stores/userStore.ts`)
+- [x] **สร้าง User Store** (`src/presentation/stores/userStore.ts`) ✅
 
-  - [ ] User interface: { id, nickname, avatar, createdAt }
-  - [ ] Zustand store with localforage persistence
-  - [ ] generateUserId() function
-  - [ ] createUser(), updateUser() actions
+  - [x] User interface: { id, nickname, avatar, createdAt }
+  - [x] Zustand store with localforage persistence
+  - [x] generateUserId() function
+  - [x] createUser(), updateUser() actions
 
-- [ ] **สร้าง User Creation Flow**
-  - [ ] First-time visitor detection
-  - [ ] Nickname input modal (retro style)
-  - [ ] Avatar selection (pixel art avatars)
+- [x] **สร้าง User Creation Flow** ✅
+  - [x] First-time visitor detection
+  - [x] Nickname input modal (retro style)
+  - [x] Avatar selection (pixel art avatars)
 
 ### 1.3 🏠 Landing Page
 
 > หน้าแรกต้อนรับผู้เล่น
 
-- [ ] **สร้าง Landing Page** (`app/page.tsx`)
+- [x] **สร้าง Landing Page** (`app/page.tsx`) ✅
 
-  - [ ] ตาม CREATE_PAGE_PATTERN.md
-  - [ ] Presenter: `src/presentation/presenters/landing/LandingPresenter.ts`
-  - [ ] Hook: `src/presentation/presenters/landing/useLandingPresenter.ts`
-  - [ ] View: `src/presentation/components/landing/LandingView.tsx`
+  - [x] View: `src/presentation/components/landing/LandingView.tsx`
 
-- [ ] **Landing Page Features**
-  - [ ] Hero section (Pixel art banner)
-  - [ ] Game title "Retro Pixel Garden"
-  - [ ] "Start Game" button
-  - [ ] "Continue" button (if user exists)
-  - [ ] Credits/About section
+- [x] **Landing Page Features** ✅
+  - [x] Hero section (Pixel art banner)
+  - [x] Game title "Retro Pixel Garden"
+  - [x] "Start Game" button
+  - [x] "Continue" button (if user exists)
+  - [x] Credits/About section
 
 ### 1.4 🎮 Colyseus Game Server Setup
 
