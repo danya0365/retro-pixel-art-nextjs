@@ -14,22 +14,42 @@ import { useState } from "react";
 
 interface GameUIProps {
   user: User;
+  isConnected?: boolean;
+  playerCount?: number;
+  dayTime?: number;
 }
 
-export function GameUI({ user }: GameUIProps) {
+export function GameUI({
+  user,
+  isConnected = false,
+  playerCount = 1,
+  dayTime = 12,
+}: GameUIProps) {
   const [showInventory, setShowInventory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const deleteUser = useUserStore((state) => state.deleteUser);
 
+  // Format day time
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time);
+    const minutes = Math.floor((time % 1) * 60);
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   return (
     <>
       {/* Top Left - Player Info */}
       <div className="absolute top-2 left-2 z-40">
-        <div className="retro-window w-48">
-          <div className="retro-window-titlebar py-1 px-2">
+        <div className="retro-window w-52">
+          <div className="retro-window-titlebar py-1 px-2 flex justify-between">
             <span className="text-[10px] font-bold text-white">
               {user.avatar} {user.nickname}
+            </span>
+            <span className="text-[10px] text-white/80">
+              🕐 {formatTime(dayTime)}
             </span>
           </div>
           <div className="p-2 text-[10px] text-[var(--win98-button-text)]">
@@ -39,11 +59,24 @@ export function GameUI({ user }: GameUIProps) {
                 <div className="h-full bg-red-500 w-full" />
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <span>⚡</span>
               <div className="flex-1 h-2 bg-gray-300 retro-inset">
                 <div className="h-full bg-yellow-500 w-4/5" />
               </div>
+            </div>
+            <div className="flex items-center justify-between text-[9px] mt-2 pt-1 border-t border-gray-300">
+              <span className="flex items-center gap-1">
+                {isConnected ? (
+                  <span className="text-green-600">🟢 Online</span>
+                ) : (
+                  <span className="text-red-600">🔴 Offline</span>
+                )}
+              </span>
+              <span className="flex items-center gap-1">
+                <Users size={10} /> {playerCount} player
+                {playerCount !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
         </div>

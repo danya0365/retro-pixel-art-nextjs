@@ -7,6 +7,7 @@ import { matchMaker } from "colyseus";
  * Import your Room files
  */
 import { GameRoom } from "./rooms/GameRoom";
+import { GardenRoom } from "./rooms/GardenRoom";
 import { MyRoom } from "./rooms/MyRoom";
 import { OpenWorldRoom } from "./rooms/OpenWorldRoom";
 
@@ -21,6 +22,7 @@ export default config({
       .filterBy(["mode"])
       .enableRealtimeListing();
     gameServer.define("open_world", OpenWorldRoom).enableRealtimeListing();
+    gameServer.define("garden_room", GardenRoom).enableRealtimeListing();
   },
 
   initializeExpress: (app) => {

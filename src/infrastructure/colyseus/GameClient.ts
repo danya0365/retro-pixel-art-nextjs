@@ -13,7 +13,7 @@ class GameClientManager {
   private static instance: GameClientManager;
   private client: Client | null = null;
   private currentRoom: Room | null = null;
-  private isConnecting: boolean = false;
+  private connectionPromise: Promise<Room> | null = null;
 
   private constructor() {}
 
@@ -36,22 +36,42 @@ class GameClientManager {
 
   /**
    * Join or create a game room
+   * Returns existing room or pending connection if already connecting
    */
   async joinOrCreateRoom(
     roomName: string = "garden_room",
     options: Record<string, unknown> = {}
   ): Promise<Room> {
+    // Return existing room if already connected
     if (this.currentRoom) {
       console.log("Already connected to a room, returning existing room");
       return this.currentRoom;
     }
 
-    if (this.isConnecting) {
-      throw new Error("Connection already in progress");
+    // Return pending promise if already connecting
+    if (this.connectionPromise) {
+      console.log("Connection already in progress, waiting...");
+      return this.connectionPromise;
     }
 
+    // Create new connection promise
+    this.connectionPromise = this.createConnection(roomName, options);
+
     try {
-      this.isConnecting = true;
+      return await this.connectionPromise;
+    } finally {
+      this.connectionPromise = null;
+    }
+  }
+
+  /**
+   * Internal method to create connection
+   */
+  private async createConnection(
+    roomName: string,
+    options: Record<string, unknown>
+  ): Promise<Room> {
+    try {
       const client = this.getClient();
 
       console.log(`Connecting to room: ${roomName}...`);
@@ -68,8 +88,6 @@ class GameClientManager {
     } catch (error) {
       console.error("Failed to join room:", error);
       throw error;
-    } finally {
-      this.isConnecting = false;
     }
   }
 

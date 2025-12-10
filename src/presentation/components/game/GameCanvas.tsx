@@ -1,16 +1,30 @@
 "use client";
 
 import type { User } from "@/src/domain/types/user";
+import type {
+  GardenPlayer,
+  PlantedItem,
+} from "@/src/presentation/hooks/useGardenRoom";
 import { Environment, Grid, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { Suspense } from "react";
-import { Player } from "./Player";
+import { LocalPlayer } from "./LocalPlayer";
+import { RemotePlayer } from "./RemotePlayer";
 import { Ground } from "./world/Ground";
 import { Trees } from "./world/Trees";
 
 interface GameCanvasProps {
   user: User;
+  players: GardenPlayer[];
+  plants: PlantedItem[];
+  localPlayerId: string | null;
+  onPlayerInput: (input: {
+    velocityX: number;
+    velocityZ: number;
+    direction: string;
+  }) => void;
+  onPlant: (type: string, x: number, z: number) => void;
 }
 
 // Loading fallback for 3D scene
@@ -23,7 +37,19 @@ function SceneLoader() {
   );
 }
 
-export function GameCanvas({ user }: GameCanvasProps) {
+export function GameCanvas({
+  user,
+  players,
+  plants,
+  localPlayerId,
+  onPlayerInput,
+  onPlant,
+}: GameCanvasProps) {
+  // Find local player from server state (match by clientId)
+  const localPlayer = players.find((p) => p.clientId === localPlayerId);
+  // Get remote players (everyone except local player)
+  const remotePlayers = players.filter((p) => p.clientId !== localPlayerId);
+
   return (
     <div className="w-full h-full absolute inset-0">
       <Canvas
@@ -59,8 +85,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
             {/* Ground */}
             <Ground />
 
-            {/* Player */}
-            <Player user={user} />
+            {/* Local Player (controlled by this client) */}
+            {localPlayer && (
+              <LocalPlayer
+                user={user}
+                serverPosition={{
+                  x: localPlayer.x,
+                  y: localPlayer.y,
+                  z: localPlayer.z,
+                }}
+                onInput={onPlayerInput}
+              />
+            )}
+
+            {/* Remote Players (synced from server) */}
+            {remotePlayers.map((player) => (
+              <RemotePlayer key={player.id} player={player} />
+            ))}
 
             {/* Trees */}
             <Trees />

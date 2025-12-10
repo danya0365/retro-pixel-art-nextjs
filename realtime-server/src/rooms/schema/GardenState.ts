@@ -1,0 +1,74 @@
+import { ArraySchema, MapSchema, Schema, type } from "@colyseus/schema";
+
+/**
+ * Player state in the garden world
+ */
+export class GardenPlayer extends Schema {
+  @type("string") id: string = "";
+  @type("string") clientId: string = "";
+  @type("string") nickname: string = "";
+  @type("string") avatar: string = "🧑‍🌾";
+
+  // Position
+  @type("number") x: number = 0;
+  @type("number") y: number = 0;
+  @type("number") z: number = 0;
+
+  // Movement
+  @type("number") velocityX: number = 0;
+  @type("number") velocityZ: number = 0;
+  @type("string") direction: string = "down"; // up, down, left, right
+  @type("boolean") isMoving: boolean = false;
+
+  // State
+  @type("string") currentAction: string = "idle"; // idle, walk, plant, water, harvest
+  @type("number") lastProcessedInput: number = 0;
+  @type("number") timestamp: number = 0;
+}
+
+/**
+ * Planted item in the garden
+ */
+export class PlantedItem extends Schema {
+  @type("string") id: string = "";
+  @type("string") type: string = ""; // tree_oak, flower_rose, etc.
+  @type("number") x: number = 0;
+  @type("number") z: number = 0;
+  @type("number") growthStage: number = 0; // 0-4
+  @type("number") plantedAt: number = 0;
+  @type("number") wateredAt: number = 0;
+  @type("string") plantedBy: string = "";
+}
+
+/**
+ * World object (decoration, structure)
+ */
+export class WorldObject extends Schema {
+  @type("string") id: string = "";
+  @type("string") type: string = ""; // fence_wood, bench, lamp, etc.
+  @type("number") x: number = 0;
+  @type("number") y: number = 0;
+  @type("number") z: number = 0;
+  @type("number") rotation: number = 0;
+  @type("string") placedBy: string = "";
+  @type("number") timestamp: number = 0;
+}
+
+/**
+ * Main garden room state
+ */
+export class GardenState extends Schema {
+  @type("string") worldId: string = "";
+  @type("string") worldName: string = "Pixel Garden";
+  @type("number") worldSize: number = 32;
+
+  // Collections
+  @type([GardenPlayer]) players = new ArraySchema<GardenPlayer>();
+  @type({ map: PlantedItem }) plants = new MapSchema<PlantedItem>();
+  @type({ map: WorldObject }) objects = new MapSchema<WorldObject>();
+
+  // Server state
+  @type("number") serverTick: number = 0;
+  @type("number") serverTime: number = 0;
+  @type("number") dayTime: number = 12; // 0-24 hours (game time)
+}

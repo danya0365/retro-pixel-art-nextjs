@@ -91,67 +91,71 @@
 
 > realtime-server ที่ /Users/marosdeeuma/retro-pixel-art-nextjs/realtime-server
 
-- [ ] **สร้าง Game Room** (`realtime-server/src/rooms/GardenRoom.ts`)
+- [x] **สร้าง Game Room** (`realtime-server/src/rooms/GardenRoom.ts`) ✅
 
-  - [ ] Room state schema (Colyseus Schema)
-  - [ ] Player state (position, inventory, etc.)
-  - [ ] World state (tiles, objects, trees)
-  - [ ] Sync mechanisms
+  - [x] Room state schema (Colyseus Schema)
+  - [x] Player state (position, direction, nickname, avatar)
+  - [x] World state (plants, objects)
+  - [x] Sync mechanisms (plant, water, harvest, place/remove object)
 
-- [ ] **สร้าง Game State Schema** (`realtime-server/src/schemas/`)
+- [x] **สร้าง Game State Schema** (`realtime-server/src/rooms/schema/GardenState.ts`) ✅
 
-  - [ ] PlayerSchema (id, x, y, direction, nickname)
-  - [ ] TileSchema (type, x, y, plantedAt)
-  - [ ] TreeSchema (type, x, y, growthStage)
-  - [ ] WorldSchema (tiles, trees, players)
+  - [x] GardenPlayer schema
+  - [x] PlantedItem schema
+  - [x] WorldObject schema
+  - [x] GardenState (players, plants, objects, dayTime)
 
-- [ ] **สร้าง Game Client** (`src/infrastructure/colyseus/GameClient.ts`)
-  - [ ] Colyseus.js client setup
-  - [ ] Room connection management
-  - [ ] State synchronization hooks
+- [x] **สร้าง Game Client** (`src/infrastructure/colyseus/GameClient.ts`) ✅
+  - [x] Colyseus.js client setup (singleton)
+  - [x] Room connection management
+  - [x] useGardenRoom hook for state sync
 
 ### 1.5 🌳 Game World (React Three + Rapier)
 
 > สวนเล็กๆ แบบ Stardew Valley
 
-- [ ] **สร้าง Game Page** (`app/game/page.tsx`)
+- [x] **สร้าง Game Page** (`app/game/page.tsx`) ✅
 
-  - [ ] ตาม CREATE_PAGE_PATTERN.md
-  - [ ] Presenter: `src/presentation/presenters/game/GamePresenter.ts`
-  - [ ] Hook: `src/presentation/presenters/game/useGamePresenter.ts`
-  - [ ] View: `src/presentation/components/game/GameView.tsx`
+  - [x] View: `src/presentation/components/game/GameView.tsx`
 
-- [ ] **สร้าง 3D Canvas Component** (`src/presentation/components/game/GameCanvas.tsx`)
+- [x] **สร้าง 3D Canvas Component** (`src/presentation/components/game/GameCanvas.tsx`) ✅
 
-  - [ ] React Three Fiber canvas setup
-  - [ ] Rapier physics world
-  - [ ] Camera controls (isometric/top-down view)
-  - [ ] Pixel art shader/materials
+  - [x] React Three Fiber canvas setup
+  - [x] Rapier physics world
+  - [x] Camera controls (OrbitControls)
+  - [x] Environment lighting
 
-- [ ] **สร้าง World Components**
-  - [ ] Ground/Terrain (`src/presentation/components/game/world/Ground.tsx`)
-  - [ ] Grass tiles (pixel art texture)
-  - [ ] Dirt tiles
-  - [ ] Water tiles
+- [x] **สร้าง World Components** ✅
+
+  - [x] Ground/Terrain (`src/presentation/components/game/world/Ground.tsx`)
+  - [x] Grass patches
+  - [x] Dirt path
+  - [x] Pond (water)
+
+- [x] **สร้าง Tree Component** (`src/presentation/components/game/world/Trees.tsx`) ✅
+
+  - [x] Pixel art style trees (3 variants)
+  - [x] Collision detection
+
 - [ ] **สร้าง Object Components**
 
-  - [ ] Tree (`src/presentation/components/game/objects/Tree.tsx`)
-  - [ ] Bush (`src/presentation/components/game/objects/Bush.tsx`)
   - [ ] Fence (`src/presentation/components/game/objects/Fence.tsx`)
-  - [ ] Path (`src/presentation/components/game/objects/Path.tsx`)
+  - [ ] Decorations (bench, lamp, etc.)
 
-- [ ] **สร้าง Player Component** (`src/presentation/components/game/Player.tsx`)
+- [x] **สร้าง Player Component** (`src/presentation/components/game/Player.tsx`) ✅
 
-  - [ ] Character sprite (pixel art)
-  - [ ] Movement controls (WASD/Arrow keys)
-  - [ ] Animation states (idle, walk, action)
-  - [ ] Collision detection
+  - [x] Voxel-style character
+  - [x] Movement controls (WASD/Arrow keys)
+  - [x] Name tag + avatar emoji
+  - [x] Collision detection (Rapier)
 
-- [ ] **สร้าง Game UI Overlay**
-  - [ ] Inventory bar
-  - [ ] Mini-map
-  - [ ] Player stats
-  - [ ] Action buttons
+- [x] **สร้าง Game UI Overlay** (`src/presentation/components/game/GameUI.tsx`) ✅
+  - [x] Hotbar (9 slots)
+  - [x] Inventory modal
+  - [x] Settings modal
+  - [x] Help modal
+  - [x] Player stats (HP, stamina)
+  - [x] Control hints
 
 ### 1.6 🔧 Utilities & Helpers
 

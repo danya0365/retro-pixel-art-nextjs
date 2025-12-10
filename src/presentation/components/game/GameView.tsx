@@ -1,17 +1,15 @@
 "use client";
 
 import { CreateUserModal } from "@/src/presentation/components/user/CreateUserModal";
+import { useGardenRoom } from "@/src/presentation/hooks/useGardenRoom";
 import { useIsHydrated, useUser } from "@/src/presentation/stores/userStore";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { GameUI } from "./GameUI";
 
 export function GameView() {
   const user = useUser();
   const isHydrated = useIsHydrated();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Show loading while hydrating user store
   if (!isHydrated) {
@@ -41,8 +39,31 @@ export function GameView() {
     );
   }
 
+  // Render game with multiplayer
+  return <GameWithMultiplayer />;
+}
+
+/**
+ * Game component with Colyseus multiplayer connection
+ */
+function GameWithMultiplayer() {
+  const user = useUser()!;
+
+  const {
+    isConnected,
+    isConnecting,
+    error,
+    players,
+    plants,
+    localPlayerId,
+    dayTime,
+    connect,
+    sendInput,
+    plant,
+  } = useGardenRoom({ user, autoConnect: true });
+
   // Show connection error
-  if (connectionError) {
+  if (error) {
     return (
       <div className="min-h-full flex items-center justify-center bg-[var(--win98-content-bg)]">
         <div className="retro-window max-w-md">
@@ -52,15 +73,9 @@ export function GameView() {
           <div className="retro-window-content text-center py-6">
             <div className="text-4xl mb-4">🔌</div>
             <p className="text-xs text-[var(--win98-button-text)] mb-4">
-              {connectionError}
+              {error}
             </p>
-            <button
-              onClick={() => {
-                setConnectionError(null);
-                setIsConnecting(true);
-              }}
-              className="retro-button px-6 py-2"
-            >
+            <button onClick={connect} className="retro-button px-6 py-2">
               🔄 Retry Connection
             </button>
           </div>
@@ -72,10 +87,22 @@ export function GameView() {
   return (
     <div className="relative w-full h-full min-h-[calc(100vh-140px)] bg-[var(--win98-content-bg)]">
       {/* 3D Game Canvas */}
-      <GameCanvas user={user} />
+      <GameCanvas
+        user={user}
+        players={players}
+        plants={plants}
+        localPlayerId={localPlayerId}
+        onPlayerInput={sendInput}
+        onPlant={plant}
+      />
 
       {/* Game UI Overlay */}
-      <GameUI user={user} />
+      <GameUI
+        user={user}
+        isConnected={isConnected}
+        playerCount={players.length}
+        dayTime={dayTime}
+      />
 
       {/* Connecting overlay */}
       {isConnecting && (
