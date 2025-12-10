@@ -137,10 +137,13 @@
   - [x] Pixel art style trees (3 variants)
   - [x] Collision detection
 
-- [ ] **สร้าง Object Components**
+- [x] **สร้าง Object Components** ✅
 
-  - [ ] Fence (`src/presentation/components/game/objects/Fence.tsx`)
-  - [ ] Decorations (bench, lamp, etc.)
+  - [x] Fence (`src/presentation/components/game/objects/Fence.tsx`)
+  - [x] Bench (`src/presentation/components/game/objects/Bench.tsx`)
+  - [x] StreetLamp (`src/presentation/components/game/objects/StreetLamp.tsx`)
+  - [x] Flower (`src/presentation/components/game/objects/Flower.tsx`)
+  - [x] PlantedCrop (`src/presentation/components/game/objects/PlantedCrop.tsx`)
 
 - [x] **สร้าง Player Component** (`src/presentation/components/game/Player.tsx`) ✅
 

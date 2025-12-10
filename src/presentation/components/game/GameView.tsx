@@ -60,6 +60,8 @@ function GameWithMultiplayer() {
     connect,
     sendInput,
     plant,
+    water,
+    harvest,
   } = useGardenRoom({ user, autoConnect: true });
 
   // Show connection error
@@ -94,6 +96,8 @@ function GameWithMultiplayer() {
         localPlayerId={localPlayerId}
         onPlayerInput={sendInput}
         onPlant={plant}
+        onWater={water}
+        onHarvest={harvest}
       />
 
       {/* Game UI Overlay */}

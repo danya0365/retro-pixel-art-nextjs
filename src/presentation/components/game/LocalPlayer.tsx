@@ -19,6 +19,7 @@ interface LocalPlayerProps {
     velocityZ: number;
     direction: string;
   }) => void;
+  onAction?: (x: number, z: number) => void;
 }
 
 const MOVE_SPEED = 5;
@@ -27,6 +28,7 @@ export function LocalPlayer({
   user,
   serverPosition,
   onInput,
+  onAction,
 }: LocalPlayerProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const meshRef = useRef<THREE.Group>(null);
@@ -37,6 +39,39 @@ export function LocalPlayer({
     right: false,
   });
   const [direction, setDirection] = useState("down");
+
+  // Handle E key for action (plant/water/harvest based on selected item)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "KeyE" && onAction && rigidBodyRef.current) {
+        const pos = rigidBodyRef.current.translation();
+        // Action slightly in front of player based on direction
+        const offset = 1;
+        let actionX = pos.x;
+        let actionZ = pos.z;
+
+        switch (direction) {
+          case "up":
+            actionZ -= offset;
+            break;
+          case "down":
+            actionZ += offset;
+            break;
+          case "left":
+            actionX -= offset;
+            break;
+          case "right":
+            actionX += offset;
+            break;
+        }
+
+        onAction(Math.round(actionX), Math.round(actionZ));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onAction, direction]);
 
   // Sync with server position when it changes significantly
   useEffect(() => {

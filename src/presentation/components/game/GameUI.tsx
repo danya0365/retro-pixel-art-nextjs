@@ -1,6 +1,11 @@
 "use client";
 
 import type { User } from "@/src/domain/types/user";
+import {
+  useHotbarItems,
+  useSelectedSlot,
+  useSetSelectedSlot,
+} from "@/src/presentation/stores/hotbarStore";
 import { useUserStore } from "@/src/presentation/stores/userStore";
 import {
   Backpack,
@@ -10,7 +15,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface GameUIProps {
   user: User;
@@ -29,6 +34,24 @@ export function GameUI({
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const deleteUser = useUserStore((state) => state.deleteUser);
+
+  // Hotbar state
+  const hotbarItems = useHotbarItems();
+  const selectedSlot = useSelectedSlot();
+  const setSelectedSlot = useSetSelectedSlot();
+
+  // Keyboard shortcuts for hotbar (1-9)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Number keys 1-9
+      if (e.key >= "1" && e.key <= "9") {
+        setSelectedSlot(parseInt(e.key) - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setSelectedSlot]);
 
   // Format day time
   const formatTime = (time: number) => {
@@ -117,18 +140,30 @@ export function GameUI({
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-40">
         <div className="retro-window">
           <div className="flex gap-1 p-1">
-            {[...Array(9)].map((_, i) => (
+            {hotbarItems.slice(0, 9).map((item, i) => (
               <div
-                key={i}
-                className="w-10 h-10 retro-inset bg-[var(--win98-button-face)] flex items-center justify-center text-lg cursor-pointer hover:bg-[var(--win98-button-highlight)]"
+                key={item?.id || i}
+                onClick={() => setSelectedSlot(i)}
+                className={`w-10 h-10 flex flex-col items-center justify-center text-lg cursor-pointer relative
+                  ${
+                    selectedSlot === i
+                      ? "retro-outset bg-[var(--win98-button-highlight)] ring-2 ring-blue-500"
+                      : "retro-inset bg-[var(--win98-button-face)] hover:bg-[var(--win98-button-highlight)]"
+                  }`}
+                title={item?.name || `Slot ${i + 1}`}
               >
-                {i === 0 && "🌱"}
-                {i === 1 && "🌻"}
-                {i === 2 && "🌳"}
-                {i === 3 && "⛏️"}
-                {i === 4 && "💧"}
+                <span className="text-base">{item?.icon || ""}</span>
+                <span className="absolute bottom-0 right-0.5 text-[8px] text-gray-500">
+                  {i + 1}
+                </span>
               </div>
             ))}
+          </div>
+          {/* Selected item name */}
+          <div className="text-center text-[10px] py-1 text-[var(--win98-button-text)] border-t border-gray-400">
+            {hotbarItems[selectedSlot]?.name || "Empty"}
+            {hotbarItems[selectedSlot]?.type === "seed" &&
+              " - Press E to plant"}
           </div>
         </div>
       </div>
@@ -137,8 +172,9 @@ export function GameUI({
       <div className="absolute bottom-2 left-2 z-40">
         <div className="retro-window text-[9px] p-2 text-[var(--win98-button-text)]">
           <div>WASD / Arrows - Move</div>
+          <div>1-9 - Select item</div>
+          <div>E - Plant/Use</div>
           <div>Mouse - Look around</div>
-          <div>Scroll - Zoom</div>
         </div>
       </div>
 
