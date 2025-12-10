@@ -9,7 +9,7 @@ import {
 // Constants
 const PLAYER_SPEED = 5;
 const SERVER_TICK_RATE = 60;
-const WORLD_SIZE = 32;
+const WORLD_SIZE = 80; // ขยายจาก 32 เป็น 80
 
 interface PlayerInput {
   sequenceNumber: number;
@@ -371,8 +371,8 @@ export class GardenRoom extends Room<GardenState> {
       const newX = player.x + normalizedVx * PLAYER_SPEED * deltaSeconds;
       const newZ = player.z + normalizedVz * PLAYER_SPEED * deltaSeconds;
 
-      // Keep within world bounds
-      const halfSize = this.state.worldSize / 2 - 1;
+      // Keep within world bounds (expanded map)
+      const halfSize = this.state.worldSize / 2 - 2;
       player.x = this.clamp(newX, -halfSize, halfSize);
       player.z = this.clamp(newZ, -halfSize, halfSize);
     }

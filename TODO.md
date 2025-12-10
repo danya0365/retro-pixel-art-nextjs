@@ -324,6 +324,64 @@ retro-pixel-art-nextjs/
 14. ⏳ Sound effects (optional)
 15. ⏳ Performance optimization
 
+### Sprint 6: Map Expansion & World Enhancement 🗺️
+
+> ขยาย Map ให้ใหญ่ขึ้น เพิ่มความหลากหลาย ทำให้น่าสำรวจ
+
+- [ ] **ขยาย Ground** (จาก 32 → 80 units)
+
+  - [ ] ปรับ GROUND_SIZE constant
+  - [ ] เพิ่ม grass patches จาก 50 → 200
+  - [ ] เพิ่ม terrain variety (texture variatฟions)
+
+- [ ] **เพิ่ม Zone System**
+
+  - [ ] Farmland Zone (พื้นที่ปลูกผัก - ตรงกลาง)
+  - [ ] Forest Zone (ป่าต้นไม้ - ด้านซ้าย)
+  - [ ] Village Zone (หมู่บ้าน - ด้านขวา)
+  - [ ] Lake Zone (ทะเลสาบ - ด้านบน)
+
+- [ ] **เพิ่ม Decorations** (`src/presentation/components/game/objects/`)
+
+  - [ ] Rock.tsx (หิน 3 ขนาด)
+  - [ ] Bush.tsx (พุ่มไม้หลายสี)
+  - [ ] Log.tsx (ท่อนไม้/ตอไม้)
+  - [ ] Haystack.tsx (กองฟาง)
+  - [ ] Barrel.tsx (ถัง)
+  - [ ] Crate.tsx (ลังไม้)
+
+- [ ] **ปรับปรุง Paths**
+
+  - [ ] Main road เชื่อม zones
+  - [ ] Cobblestone path ในหมู่บ้าน
+  - [ ] Dirt path ในฟาร์ม
+  - [ ] Forest trail ในป่า
+
+- [ ] **เพิ่ม Buildings** (`src/presentation/components/game/buildings/`)
+
+  - [ ] Barn.tsx (โรงนา)
+  - [ ] Well.tsx (บ่อน้ำ)
+  - [ ] Bridge.tsx (สะพานข้ามน้ำ)
+  - [ ] Windmill.tsx (กังหันลม)
+  - [ ] SmallHouse.tsx (บ้านเล็ก)
+
+- [ ] **ปรับปรุง Water Features**
+
+  - [ ] ขยาย Pond เป็น Lake
+  - [ ] เพิ่ม River (แม่น้ำ)
+  - [ ] เพิ่ม Waterfall effects
+
+- [ ] **เพิ่ม Trees variety**
+
+  - [ ] Oak Tree, Pine Tree, Cherry Blossom
+  - [ ] Dead Tree (ต้นไม้แห้ง)
+  - [ ] Apple Tree (เก็บผลไม้ได้)
+
+- [ ] **อัพเดท GameCanvas**
+  - [ ] ใช้ Zone system จัด layout
+  - [ ] ปรับ camera far distance
+  - [ ] ปรับ Grid size
+
 ---
 
 ## 📝 Notes

@@ -27,6 +27,196 @@ interface LocalPlayerProps {
 const MOVE_SPEED = 5;
 const ROTATION_SPEED = 10; // How fast player rotates to face movement direction
 
+// Animated Character with walking animation
+function AnimatedCharacter({ isMoving }: { isMoving: boolean }) {
+  const leftLegRef = useRef<THREE.Group>(null);
+  const rightLegRef = useRef<THREE.Group>(null);
+  const leftArmRef = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
+  const bodyRef = useRef<THREE.Group>(null);
+
+  const walkCycle = useRef(0);
+
+  useFrame((_, delta) => {
+    if (!leftLegRef.current || !rightLegRef.current) return;
+    if (!leftArmRef.current || !rightArmRef.current) return;
+
+    if (isMoving) {
+      // Walk cycle animation
+      walkCycle.current += delta * 10; // Speed of walk cycle
+      const swing = Math.sin(walkCycle.current) * 0.6; // Leg swing angle
+
+      // Legs swing opposite to each other
+      leftLegRef.current.rotation.x = swing;
+      rightLegRef.current.rotation.x = -swing;
+
+      // Arms swing opposite to legs
+      leftArmRef.current.rotation.x = -swing * 0.7;
+      rightArmRef.current.rotation.x = swing * 0.7;
+
+      // Slight body bob
+      if (bodyRef.current) {
+        bodyRef.current.position.y =
+          1.0 + Math.abs(Math.sin(walkCycle.current * 2)) * 0.05;
+      }
+    } else {
+      // Idle - smoothly return to default pose
+      leftLegRef.current.rotation.x *= 0.9;
+      rightLegRef.current.rotation.x *= 0.9;
+      leftArmRef.current.rotation.x *= 0.9;
+      rightArmRef.current.rotation.x *= 0.9;
+      if (bodyRef.current) {
+        bodyRef.current.position.y += (1.0 - bodyRef.current.position.y) * 0.1;
+      }
+      walkCycle.current = 0;
+    }
+  });
+
+  return (
+    <group>
+      {/* === BODY (Torso) === */}
+      <group ref={bodyRef} position={[0, 1.0, 0]}>
+        {/* Torso */}
+        <mesh castShadow>
+          <boxGeometry args={[0.5, 0.6, 0.3]} />
+          <meshStandardMaterial color="#4a90d9" /> {/* Blue shirt */}
+        </mesh>
+
+        {/* Shirt collar */}
+        <mesh position={[0, 0.28, 0.05]} castShadow>
+          <boxGeometry args={[0.25, 0.08, 0.15]} />
+          <meshStandardMaterial color="#3a80c9" />
+        </mesh>
+
+        {/* Belt */}
+        <mesh position={[0, -0.28, 0]} castShadow>
+          <boxGeometry args={[0.52, 0.08, 0.32]} />
+          <meshStandardMaterial color="#4a3a2a" /> {/* Brown belt */}
+        </mesh>
+
+        {/* Belt buckle */}
+        <mesh position={[0, -0.28, 0.17]} castShadow>
+          <boxGeometry args={[0.1, 0.06, 0.02]} />
+          <meshStandardMaterial color="#d4a440" metalness={0.5} /> {/* Gold */}
+        </mesh>
+      </group>
+
+      {/* === HEAD === */}
+      <group position={[0, 1.65, 0]}>
+        {/* Head */}
+        <mesh castShadow>
+          <boxGeometry args={[0.4, 0.45, 0.4]} />
+          <meshStandardMaterial color="#ffdbac" /> {/* Skin */}
+        </mesh>
+
+        {/* Hair */}
+        <mesh position={[0, 0.2, 0]} castShadow>
+          <boxGeometry args={[0.44, 0.15, 0.44]} />
+          <meshStandardMaterial color="#4a3020" /> {/* Brown hair */}
+        </mesh>
+
+        {/* Hair front */}
+        <mesh position={[0, 0.1, 0.18]} castShadow>
+          <boxGeometry args={[0.35, 0.1, 0.1]} />
+          <meshStandardMaterial color="#4a3020" />
+        </mesh>
+
+        {/* Eyes */}
+        <mesh position={[-0.1, 0.02, 0.21]}>
+          <boxGeometry args={[0.06, 0.06, 0.02]} />
+          <meshStandardMaterial color="#2a2a2a" />
+        </mesh>
+        <mesh position={[0.1, 0.02, 0.21]}>
+          <boxGeometry args={[0.06, 0.06, 0.02]} />
+          <meshStandardMaterial color="#2a2a2a" />
+        </mesh>
+
+        {/* Mouth */}
+        <mesh position={[0, -0.1, 0.21]}>
+          <boxGeometry args={[0.12, 0.03, 0.02]} />
+          <meshStandardMaterial color="#c47070" />
+        </mesh>
+
+        {/* Ears */}
+        <mesh position={[-0.22, 0, 0]} castShadow>
+          <boxGeometry args={[0.06, 0.12, 0.08]} />
+          <meshStandardMaterial color="#ffcb9c" />
+        </mesh>
+        <mesh position={[0.22, 0, 0]} castShadow>
+          <boxGeometry args={[0.06, 0.12, 0.08]} />
+          <meshStandardMaterial color="#ffcb9c" />
+        </mesh>
+      </group>
+
+      {/* === LEFT ARM === */}
+      <group ref={leftArmRef} position={[-0.35, 1.15, 0]}>
+        {/* Upper arm */}
+        <mesh position={[0, -0.15, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.35, 0.2]} />
+          <meshStandardMaterial color="#4a90d9" /> {/* Shirt sleeve */}
+        </mesh>
+        {/* Lower arm / hand */}
+        <mesh position={[0, -0.4, 0]} castShadow>
+          <boxGeometry args={[0.14, 0.25, 0.16]} />
+          <meshStandardMaterial color="#ffdbac" /> {/* Skin */}
+        </mesh>
+      </group>
+
+      {/* === RIGHT ARM === */}
+      <group ref={rightArmRef} position={[0.35, 1.15, 0]}>
+        {/* Upper arm */}
+        <mesh position={[0, -0.15, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.35, 0.2]} />
+          <meshStandardMaterial color="#4a90d9" />
+        </mesh>
+        {/* Lower arm / hand */}
+        <mesh position={[0, -0.4, 0]} castShadow>
+          <boxGeometry args={[0.14, 0.25, 0.16]} />
+          <meshStandardMaterial color="#ffdbac" />
+        </mesh>
+      </group>
+
+      {/* === LEFT LEG === */}
+      <group ref={leftLegRef} position={[-0.12, 0.45, 0]}>
+        {/* Thigh */}
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.4, 0.22]} />
+          <meshStandardMaterial color="#3a5a8a" /> {/* Dark blue jeans */}
+        </mesh>
+        {/* Shin */}
+        <mesh position={[0, -0.5, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.35, 0.2]} />
+          <meshStandardMaterial color="#3a5a8a" />
+        </mesh>
+        {/* Shoe */}
+        <mesh position={[0, -0.72, 0.05]} castShadow>
+          <boxGeometry args={[0.2, 0.12, 0.28]} />
+          <meshStandardMaterial color="#3a2a1a" /> {/* Brown shoe */}
+        </mesh>
+      </group>
+
+      {/* === RIGHT LEG === */}
+      <group ref={rightLegRef} position={[0.12, 0.45, 0]}>
+        {/* Thigh */}
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.4, 0.22]} />
+          <meshStandardMaterial color="#3a5a8a" />
+        </mesh>
+        {/* Shin */}
+        <mesh position={[0, -0.5, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.35, 0.2]} />
+          <meshStandardMaterial color="#3a5a8a" />
+        </mesh>
+        {/* Shoe */}
+        <mesh position={[0, -0.72, 0.05]} castShadow>
+          <boxGeometry args={[0.2, 0.12, 0.28]} />
+          <meshStandardMaterial color="#3a2a1a" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 export function LocalPlayer({
   user,
   serverPosition,
@@ -240,38 +430,12 @@ export function LocalPlayer({
       <CapsuleCollider args={[0.3, 0.3]} />
 
       <group ref={meshRef}>
-        {/* Body */}
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <boxGeometry args={[0.6, 0.8, 0.4]} />
-          <meshStandardMaterial color="#4a90d9" />
-        </mesh>
-
-        {/* Head */}
-        <mesh position={[0, 1.1, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.5, 0.5]} />
-          <meshStandardMaterial color="#ffdbac" />
-        </mesh>
-
-        {/* Hair */}
-        <mesh position={[0, 1.4, 0]} castShadow>
-          <boxGeometry args={[0.55, 0.2, 0.55]} />
-          <meshStandardMaterial color="#8B4513" />
-        </mesh>
-
-        {/* Legs */}
-        <mesh position={[-0.15, -0.1, 0]} castShadow>
-          <boxGeometry args={[0.25, 0.4, 0.35]} />
-          <meshStandardMaterial color="#2d5a27" />
-        </mesh>
-        <mesh position={[0.15, -0.1, 0]} castShadow>
-          <boxGeometry args={[0.25, 0.4, 0.35]} />
-          <meshStandardMaterial color="#2d5a27" />
-        </mesh>
+        <AnimatedCharacter isMoving={keys.forward || keys.backward} />
 
         {/* Name tag */}
         <Text
-          position={[0, 1.8, 0]}
-          fontSize={0.3}
+          position={[0, 2.4, 0]}
+          fontSize={0.25}
           color="white"
           anchorX="center"
           anchorY="middle"
@@ -283,8 +447,8 @@ export function LocalPlayer({
 
         {/* Avatar emoji */}
         <Text
-          position={[0, 2.2, 0]}
-          fontSize={0.4}
+          position={[0, 2.7, 0]}
+          fontSize={0.35}
           anchorX="center"
           anchorY="middle"
         >
