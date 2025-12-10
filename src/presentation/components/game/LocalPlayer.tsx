@@ -1,6 +1,7 @@
 "use client";
 
 import type { User } from "@/src/domain/types/user";
+import { soundService } from "@/src/infrastructure/audio/soundService";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
@@ -37,6 +38,7 @@ export function LocalPlayer({
   const meshRef = useRef<THREE.Group>(null);
   const playerRotation = useRef(0); // Current player rotation
   const targetRotation = useRef(0); // Target rotation based on movement
+  const footstepTimer = useRef(0); // Timer for footstep sounds
 
   const [keys, setKeys] = useState({
     forward: false,
@@ -213,6 +215,18 @@ export function LocalPlayer({
     // Report state to camera controller
     const isCurrentlyMoving = velocityX !== 0 || velocityZ !== 0;
     onStateChange?.(playerRotation.current, isCurrentlyMoving);
+
+    // Play footstep sounds while moving
+    if (isCurrentlyMoving) {
+      footstepTimer.current += delta;
+      // Play footstep every 0.35 seconds while moving
+      if (footstepTimer.current >= 0.35) {
+        soundService.play("footstep");
+        footstepTimer.current = 0;
+      }
+    } else {
+      footstepTimer.current = 0;
+    }
   });
 
   return (

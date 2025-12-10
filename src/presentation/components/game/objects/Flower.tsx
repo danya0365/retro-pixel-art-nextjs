@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 interface FlowerProps {
   position: [number, number, number];
   color?: string;
@@ -15,8 +17,11 @@ const FLOWER_COLORS = {
 export function Flower({ position, color, variant = "tulip" }: FlowerProps) {
   const [x, y, z] = position;
   const colors = FLOWER_COLORS[variant];
-  const flowerColor =
-    color || colors[Math.floor(Math.random() * colors.length)];
+  // Memoize color to prevent random changes on re-render
+  const flowerColor = useMemo(
+    () => color || colors[Math.floor(Math.random() * colors.length)],
+    [color, colors]
+  );
 
   return (
     <group position={[x, y, z]}>
@@ -107,21 +112,27 @@ export function FlowerBed({
     "rose",
   ];
 
+  // Memoize flower positions to prevent re-randomizing on every render
+  const flowers = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        offsetX: (Math.random() - 0.5) * spread,
+        offsetZ: (Math.random() - 0.5) * spread,
+        variant: variants[Math.floor(Math.random() * variants.length)],
+      })),
+    [count, spread] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   return (
     <group>
-      {Array.from({ length: count }).map((_, i) => {
-        const offsetX = (Math.random() - 0.5) * spread;
-        const offsetZ = (Math.random() - 0.5) * spread;
-        const variant = variants[Math.floor(Math.random() * variants.length)];
-
-        return (
-          <Flower
-            key={i}
-            position={[x + offsetX, y, z + offsetZ]}
-            variant={variant}
-          />
-        );
-      })}
+      {flowers.map((flower) => (
+        <Flower
+          key={flower.id}
+          position={[x + flower.offsetX, y, z + flower.offsetZ]}
+          variant={flower.variant}
+        />
+      ))}
     </group>
   );
 }

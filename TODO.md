@@ -192,28 +192,31 @@
 
 ### 1.7 🎮 Fun Game Features
 
-- [ ] **Day/Night Cycle Visual Effects**
+- [x] **Day/Night Cycle Visual Effects** ✅
 
-  - [ ] Sky color changes based on dayTime
-  - [ ] Lighting intensity changes
-  - [ ] Street lamps turn on at night
+  - [x] Sky color changes based on dayTime
+  - [x] Lighting intensity changes (sun position moves)
+  - [x] Street lamps turn on at night
+  - [x] Stars visible at night
 
-- [ ] **Particle Effects**
+- [x] **Particle Effects** ✅
 
-  - [ ] Sparkles when planting
-  - [ ] Water droplets when watering
-  - [ ] Harvest celebration effect
+  - [x] Green sparkles when planting
+  - [x] Blue water droplets when watering
+  - [x] Golden sparkles when harvesting
 
-- [ ] **Sound Effects**
+- [x] **Sound Effects** ✅ (`src/infrastructure/audio/soundService.ts`)
 
-  - [ ] Footsteps
-  - [ ] Planting sound
-  - [ ] Watering sound
-  - [ ] Harvest sound
+  - [x] Footsteps (alternating pitch)
+  - [x] Planting sound (earth/digging + sparkle)
+  - [x] Watering sound (splash + drips)
+  - [x] Harvest sound (celebration arpeggio)
+  - [x] Chicken cluck
+  - [x] BGM (day/night/rain themes)
 
-- [ ] **NPC & Animals**
-  - [ ] Chickens walking around
-  - [ ] Butterflies flying
+- [x] **NPC & Animals** ✅
+  - [x] Chickens walking around (random movement, pecking, clucking)
+  - [x] Butterflies flying (figure-8 pattern, wing flapping)
 
 ---
 

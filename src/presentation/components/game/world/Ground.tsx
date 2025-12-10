@@ -1,10 +1,23 @@
 "use client";
 
 import { RigidBody } from "@react-three/rapier";
+import { useMemo } from "react";
 
 const GROUND_SIZE = 32;
 
 export function Ground() {
+  // Memoize grass patch positions to prevent re-randomizing on every render
+  const grassPatches = useMemo(
+    () =>
+      Array.from({ length: 50 }, (_, i) => ({
+        id: i,
+        x: (Math.random() - 0.5) * (GROUND_SIZE - 4),
+        z: (Math.random() - 0.5) * (GROUND_SIZE - 4),
+        scale: 0.5 + Math.random() * 0.5,
+      })),
+    []
+  );
+
   return (
     <RigidBody type="fixed" colliders="cuboid">
       {/* Main ground plane */}
@@ -18,12 +31,13 @@ export function Ground() {
       </mesh>
 
       {/* Decorative grass patches */}
-      {Array.from({ length: 50 }).map((_, i) => {
-        const x = (Math.random() - 0.5) * (GROUND_SIZE - 4);
-        const z = (Math.random() - 0.5) * (GROUND_SIZE - 4);
-        const scale = 0.5 + Math.random() * 0.5;
-        return <GrassPatch key={i} position={[x, 0.01, z]} scale={scale} />;
-      })}
+      {grassPatches.map((patch) => (
+        <GrassPatch
+          key={patch.id}
+          position={[patch.x, 0.01, patch.z]}
+          scale={patch.scale}
+        />
+      ))}
 
       {/* Dirt path */}
       <mesh
@@ -67,28 +81,34 @@ function GrassPatch({
   scale?: number;
 }) {
   const grassColors = ["#5a9a3a", "#4a8a2a", "#6aba4a", "#3a7a1a"];
-  const color = grassColors[Math.floor(Math.random() * grassColors.length)];
+
+  // Memoize grass blades to prevent re-randomizing
+  const blades = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, i) => ({
+        id: i,
+        offsetX: (Math.random() - 0.5) * 0.3,
+        offsetZ: (Math.random() - 0.5) * 0.3,
+        height: 0.1 + Math.random() * 0.15,
+        rotation: Math.random() * Math.PI * 2,
+        color: grassColors[Math.floor(Math.random() * grassColors.length)],
+      })),
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   return (
     <group position={position} scale={scale}>
       {/* Multiple grass blades */}
-      {Array.from({ length: 5 }).map((_, i) => {
-        const offsetX = (Math.random() - 0.5) * 0.3;
-        const offsetZ = (Math.random() - 0.5) * 0.3;
-        const height = 0.1 + Math.random() * 0.15;
-        const rotation = Math.random() * Math.PI * 2;
-
-        return (
-          <mesh
-            key={i}
-            position={[offsetX, height / 2, offsetZ]}
-            rotation={[0, rotation, 0]}
-          >
-            <boxGeometry args={[0.05, height, 0.02]} />
-            <meshStandardMaterial color={color} />
-          </mesh>
-        );
-      })}
+      {blades.map((blade) => (
+        <mesh
+          key={blade.id}
+          position={[blade.offsetX, blade.height / 2, blade.offsetZ]}
+          rotation={[0, blade.rotation, 0]}
+        >
+          <boxGeometry args={[0.05, blade.height, 0.02]} />
+          <meshStandardMaterial color={blade.color} />
+        </mesh>
+      ))}
     </group>
   );
 }

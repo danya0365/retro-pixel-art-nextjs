@@ -1,6 +1,7 @@
 "use client";
 
 import type { User } from "@/src/domain/types/user";
+import { soundService } from "@/src/infrastructure/audio/soundService";
 import {
   useHotbarItems,
   useSelectedSlot,
@@ -34,6 +35,17 @@ export function GameUI({
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const deleteUser = useUserStore((state) => state.deleteUser);
+
+  // Sound settings state
+  const [bgmVolume, setBgmVolume] = useState(() =>
+    Math.round(soundService.isBgmEnabled() ? 50 : 0)
+  );
+  const [sfxVolume, setSfxVolume] = useState(() =>
+    Math.round(soundService.getVolume() * 100)
+  );
+  const [bgmEnabled, setBgmEnabled] = useState(() =>
+    soundService.isBgmEnabled()
+  );
 
   // Hotbar state
   const hotbarItems = useHotbarItems();
@@ -234,28 +246,72 @@ export function GameUI({
             </div>
             <div className="retro-window-content text-xs text-[var(--win98-button-text)]">
               <div className="space-y-3">
+                {/* BGM Toggle */}
+                <div className="flex items-center justify-between">
+                  <label className="font-bold">🎵 Background Music</label>
+                  <button
+                    className={`retro-button px-3 py-1 ${
+                      bgmEnabled ? "bg-green-200" : "bg-red-200"
+                    }`}
+                    onClick={() => {
+                      const newEnabled = !bgmEnabled;
+                      setBgmEnabled(newEnabled);
+                      soundService.setBgmEnabled(newEnabled);
+                      if (newEnabled) {
+                        soundService.startBgm("day");
+                      }
+                    }}
+                  >
+                    {bgmEnabled ? "ON" : "OFF"}
+                  </button>
+                </div>
+
+                {/* BGM Volume */}
                 <div>
                   <label className="block mb-1 font-bold">
-                    🔊 Music Volume
+                    🔊 Music Volume: {bgmVolume}%
                   </label>
                   <input
                     type="range"
                     min="0"
                     max="100"
-                    defaultValue="50"
+                    value={bgmVolume}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setBgmVolume(value);
+                      soundService.setBgmVolume(value / 100);
+                    }}
                     className="w-full"
                   />
                 </div>
+
+                {/* SFX Volume */}
                 <div>
-                  <label className="block mb-1 font-bold">🔉 SFX Volume</label>
+                  <label className="block mb-1 font-bold">
+                    🔉 SFX Volume: {sfxVolume}%
+                  </label>
                   <input
                     type="range"
                     min="0"
                     max="100"
-                    defaultValue="70"
+                    value={sfxVolume}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      setSfxVolume(value);
+                      soundService.setVolume(value / 100);
+                    }}
                     className="w-full"
                   />
                 </div>
+
+                {/* Test Sound Button */}
+                <button
+                  className="retro-button w-full py-1"
+                  onClick={() => soundService.play("select")}
+                >
+                  🔔 Test Sound
+                </button>
+
                 <hr className="border-[var(--win98-button-shadow)]" />
                 <button
                   className="retro-button w-full py-2 text-red-600"

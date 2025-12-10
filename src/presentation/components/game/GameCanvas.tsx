@@ -1,6 +1,7 @@
 "use client";
 
 import type { User } from "@/src/domain/types/user";
+import { soundService } from "@/src/infrastructure/audio/soundService";
 import type {
   GardenPlayer,
   PlantedItem,
@@ -9,7 +10,9 @@ import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
 import { Grid } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { ButterflySwarm } from "./animals/Butterfly";
+import { ChickenFlock } from "./animals/Chicken";
 import { CameraController } from "./CameraController";
 import { ParticleManager } from "./effects/ParticleEffects";
 import { LocalPlayer } from "./LocalPlayer";
@@ -68,6 +71,17 @@ export function GameCanvas({
   // Track player rotation and movement for camera
   const [playerRotation, setPlayerRotation] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
+
+  // Start BGM based on day/night
+  useEffect(() => {
+    const bgmType = dayTime >= 6 && dayTime < 18 ? "day" : "night";
+    if (!soundService.isBgmPlaying()) {
+      soundService.startBgm(bgmType);
+    }
+    return () => {
+      soundService.stopBgm();
+    };
+  }, []);
 
   // Particle effects state
   const [particleEffects, setParticleEffects] = useState<
@@ -134,6 +148,7 @@ export function GameCanvas({
     if (selectedItem.type === "seed" && selectedItem.plantType) {
       onPlant(selectedItem.plantType, x, z);
       spawnEffect(x, z, "plant");
+      soundService.play("plant");
       return;
     }
 
@@ -143,6 +158,7 @@ export function GameCanvas({
       if (plant) {
         onWater(plant.id);
         spawnEffect(plant.x, plant.z, "water");
+        soundService.play("water");
       }
       return;
     }
@@ -153,6 +169,7 @@ export function GameCanvas({
       if (plant && plant.growthStage >= 4) {
         onHarvest(plant.id);
         spawnEffect(plant.x, plant.z, "harvest");
+        soundService.play("harvest");
       }
       return;
     }
@@ -247,6 +264,10 @@ export function GameCanvas({
             effects={particleEffects}
             onEffectComplete={removeEffect}
           />
+
+          {/* Animals */}
+          <ChickenFlock center={[3, 0, 3]} count={3} spread={4} />
+          <ButterflySwarm center={[0, 0, 0]} count={5} spread={8} />
 
           {/* Grid helper (for development) */}
           <Grid
