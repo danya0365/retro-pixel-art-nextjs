@@ -94,6 +94,7 @@ function GameWithMultiplayer() {
         players={players}
         plants={plants}
         localPlayerId={localPlayerId}
+        dayTime={dayTime}
         onPlayerInput={sendInput}
         onPlant={plant}
         onWater={water}

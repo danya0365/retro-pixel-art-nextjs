@@ -151,6 +151,28 @@
   - [x] Movement controls (WASD/Arrow keys)
   - [x] Name tag + avatar emoji
   - [x] Collision detection (Rapier)
+  - [x] Player-relative movement (W/S forward/backward, A/D rotate)
+  - [x] Smooth rotation animation
+
+- [x] **สร้าง Camera Controller** (`src/presentation/components/game/CameraController.tsx`) ✅
+
+  - [x] Camera follows local player
+  - [x] Smooth position interpolation
+  - [x] Camera rotates behind player when moving
+  - [x] Manual camera rotation with mouse (OrbitControls)
+
+- [x] **สร้าง Hotbar System** (`src/presentation/stores/hotbarStore.ts`) ✅
+
+  - [x] 9-slot hotbar with default items
+  - [x] Keyboard shortcuts (1-9) for item selection
+  - [x] Seeds, tools (watering can, hoe, axe, hand)
+  - [x] Unified action system (E key)
+
+- [x] **สร้าง Farming System** ✅
+
+  - [x] Planting (E + seed selected)
+  - [x] Watering (E + watering can)
+  - [x] Harvesting (E + hand on mature plants)
 
 - [x] **สร้าง Game UI Overlay** (`src/presentation/components/game/GameUI.tsx`) ✅
   - [x] Hotbar (9 slots)
@@ -162,16 +184,36 @@
 
 ### 1.6 🔧 Utilities & Helpers
 
-- [ ] **สร้าง Pixel Art Helpers**
+- [x] **Collision Detection** ✅ (handled by @react-three/rapier)
 
+- [ ] **สร้าง Pixel Art Helpers** (Optional)
   - [ ] Sprite sheet loader
-  - [ ] Pixel-perfect rendering utilities
   - [ ] Color palette constants
 
-- [ ] **สร้าง Game Utils**
-  - [ ] Tile position helpers
-  - [ ] Collision detection utils
-  - [ ] Random generation for world
+### 1.7 🎮 Fun Game Features
+
+- [ ] **Day/Night Cycle Visual Effects**
+
+  - [ ] Sky color changes based on dayTime
+  - [ ] Lighting intensity changes
+  - [ ] Street lamps turn on at night
+
+- [ ] **Particle Effects**
+
+  - [ ] Sparkles when planting
+  - [ ] Water droplets when watering
+  - [ ] Harvest celebration effect
+
+- [ ] **Sound Effects**
+
+  - [ ] Footsteps
+  - [ ] Planting sound
+  - [ ] Watering sound
+  - [ ] Harvest sound
+
+- [ ] **NPC & Animals**
+  - [ ] Chickens walking around
+  - [ ] Butterflies flying
 
 ---
 

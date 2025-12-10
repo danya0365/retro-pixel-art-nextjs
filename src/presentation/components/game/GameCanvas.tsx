@@ -6,11 +6,12 @@ import type {
   PlantedItem,
 } from "@/src/presentation/hooks/useGardenRoom";
 import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
-import { Environment, Grid } from "@react-three/drei";
+import { Grid } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { Suspense, useCallback, useState } from "react";
 import { CameraController } from "./CameraController";
+import { ParticleManager } from "./effects/ParticleEffects";
 import { LocalPlayer } from "./LocalPlayer";
 import { Bench } from "./objects/Bench";
 import { FenceRow } from "./objects/Fence";
@@ -18,6 +19,7 @@ import { FlowerBed } from "./objects/Flower";
 import { PlantedCrops } from "./objects/PlantedCrop";
 import { StreetLamp } from "./objects/StreetLamp";
 import { RemotePlayer } from "./RemotePlayer";
+import { DayNightCycle } from "./world/DayNightCycle";
 import { Ground } from "./world/Ground";
 import { Trees } from "./world/Trees";
 
@@ -26,6 +28,7 @@ interface GameCanvasProps {
   players: GardenPlayer[];
   plants: PlantedItem[];
   localPlayerId: string | null;
+  dayTime: number; // 0-24 hours
   onPlayerInput: (input: {
     velocityX: number;
     velocityZ: number;
@@ -51,6 +54,7 @@ export function GameCanvas({
   players,
   plants,
   localPlayerId,
+  dayTime,
   onPlayerInput,
   onPlant,
   onWater,
@@ -64,6 +68,33 @@ export function GameCanvas({
   // Track player rotation and movement for camera
   const [playerRotation, setPlayerRotation] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
+
+  // Particle effects state
+  const [particleEffects, setParticleEffects] = useState<
+    {
+      id: number;
+      position: [number, number, number];
+      type: "plant" | "water" | "harvest";
+    }[]
+  >([]);
+  const particleIdRef = { current: 0 };
+
+  // Spawn particle effect
+  const spawnEffect = useCallback(
+    (x: number, z: number, type: "plant" | "water" | "harvest") => {
+      const id = particleIdRef.current++;
+      setParticleEffects((prev) => [
+        ...prev,
+        { id, position: [x, 0, z], type },
+      ]);
+    },
+    []
+  );
+
+  // Remove completed effect
+  const removeEffect = useCallback((id: number) => {
+    setParticleEffects((prev) => prev.filter((e) => e.id !== id));
+  }, []);
 
   // Callback for LocalPlayer to report its state
   const handlePlayerStateChange = useCallback(
@@ -102,6 +133,7 @@ export function GameCanvas({
     // Planting with seeds
     if (selectedItem.type === "seed" && selectedItem.plantType) {
       onPlant(selectedItem.plantType, x, z);
+      spawnEffect(x, z, "plant");
       return;
     }
 
@@ -110,6 +142,7 @@ export function GameCanvas({
       const plant = findNearestPlant(x, z);
       if (plant) {
         onWater(plant.id);
+        spawnEffect(plant.x, plant.z, "water");
       }
       return;
     }
@@ -119,6 +152,7 @@ export function GameCanvas({
       const plant = findNearestPlant(x, z);
       if (plant && plant.growthStage >= 4) {
         onHarvest(plant.id);
+        spawnEffect(plant.x, plant.z, "harvest");
       }
       return;
     }
@@ -137,22 +171,8 @@ export function GameCanvas({
         style={{ background: "#87CEEB" }} // Sky blue background
       >
         <Suspense fallback={<SceneLoader />}>
-          {/* Lighting */}
-          <ambientLight intensity={0.5} />
-          <directionalLight
-            position={[10, 20, 10]}
-            intensity={1}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-camera-far={50}
-            shadow-camera-left={-20}
-            shadow-camera-right={20}
-            shadow-camera-top={20}
-            shadow-camera-bottom={-20}
-          />
-
-          {/* Environment for better lighting */}
-          <Environment preset="dawn" />
+          {/* Day/Night Cycle - dynamic lighting based on time */}
+          <DayNightCycle dayTime={dayTime} />
 
           {/* Physics World */}
           <Physics gravity={[0, -9.81, 0]}>
@@ -192,11 +212,23 @@ export function GameCanvas({
             <FenceRow start={[-8, 0, -8]} count={8} direction="z" />
             <FenceRow start={[8, 0, -8]} count={8} direction="z" />
 
-            {/* Street lamps */}
-            <StreetLamp position={[-6, 0, -6]} />
-            <StreetLamp position={[6, 0, -6]} />
-            <StreetLamp position={[-6, 0, 6]} />
-            <StreetLamp position={[6, 0, 6]} />
+            {/* Street lamps - turn on at night */}
+            <StreetLamp
+              position={[-6, 0, -6]}
+              lightOn={dayTime < 6 || dayTime >= 18}
+            />
+            <StreetLamp
+              position={[6, 0, -6]}
+              lightOn={dayTime < 6 || dayTime >= 18}
+            />
+            <StreetLamp
+              position={[-6, 0, 6]}
+              lightOn={dayTime < 6 || dayTime >= 18}
+            />
+            <StreetLamp
+              position={[6, 0, 6]}
+              lightOn={dayTime < 6 || dayTime >= 18}
+            />
 
             {/* Benches */}
             <Bench position={[4, 0, 0]} rotation={-Math.PI / 2} />
@@ -209,6 +241,12 @@ export function GameCanvas({
           <FlowerBed position={[-5, 0, 5]} count={8} spread={1.5} />
           <FlowerBed position={[5, 0, -5]} count={6} spread={1} />
           <FlowerBed position={[-5, 0, -5]} count={6} spread={1} />
+
+          {/* Particle Effects */}
+          <ParticleManager
+            effects={particleEffects}
+            onEffectComplete={removeEffect}
+          />
 
           {/* Grid helper (for development) */}
           <Grid
