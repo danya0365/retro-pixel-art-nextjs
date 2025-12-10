@@ -1,0 +1,657 @@
+/* ============================================
+   🖥️ RETRO IE5 BROWSER STYLING
+   Windows 98 / Internet Explorer 5 Theme
+   ============================================ */
+
+/* Windows 98 Color Palette */
+:root {
+  /* Window colors */
+  --win98-titlebar-active: linear-gradient(to right, #000080, #1084d0);
+  --win98-titlebar-inactive: linear-gradient(to right, #808080, #b5b5b5);
+  --win98-titlebar-text: #ffffff;
+
+  /* Button & UI colors */
+  --win98-button-face: #c0c0c0;
+  --win98-button-highlight: #ffffff;
+  --win98-button-shadow: #808080;
+  --win98-button-dark-shadow: #000000;
+  --win98-button-text: #000000;
+
+  /* Window colors */
+  --win98-window-bg: #c0c0c0;
+  --win98-window-border: #808080;
+  --win98-content-bg: #ffffff;
+
+  /* Input colors */
+  --win98-input-bg: #ffffff;
+  --win98-input-border: #808080;
+  --win98-input-border-dark: #000000;
+
+  /* Menu colors */
+  --win98-menu-bg: #c0c0c0;
+  --win98-menu-highlight: #000080;
+  --win98-menu-highlight-text: #ffffff;
+
+  /* Scrollbar colors */
+  --win98-scrollbar-bg: #c0c0c0;
+  --win98-scrollbar-thumb: #c0c0c0;
+
+  /* Status bar */
+  --win98-status-bg: #c0c0c0;
+}
+
+/* Dark mode palette */
+.dark {
+  --win98-titlebar-active: linear-gradient(to right, #1a1a2e, #16213e);
+  --win98-titlebar-inactive: linear-gradient(to right, #2d2d2d, #404040);
+  --win98-titlebar-text: #ffffff;
+
+  --win98-button-face: #3d3d3d;
+  --win98-button-highlight: #5a5a5a;
+  --win98-button-shadow: #2a2a2a;
+  --win98-button-dark-shadow: #000000;
+  --win98-button-text: #e0e0e0;
+
+  --win98-window-bg: #2d2d2d;
+  --win98-window-border: #1a1a1a;
+  --win98-content-bg: #1a1a1a;
+
+  --win98-input-bg: #1a1a1a;
+  --win98-input-border: #3d3d3d;
+  --win98-input-border-dark: #000000;
+
+  --win98-menu-bg: #2d2d2d;
+  --win98-menu-highlight: #0a3d62;
+  --win98-menu-highlight-text: #ffffff;
+
+  --win98-scrollbar-bg: #2d2d2d;
+  --win98-scrollbar-thumb: #4a4a4a;
+
+  --win98-status-bg: #2d2d2d;
+}
+
+/* ============================================
+   BROWSER CONTAINER
+   ============================================ */
+
+.retro-browser {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--win98-window-bg);
+  font-family: "Tahoma", "MS Sans Serif", "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: var(--win98-button-text);
+  image-rendering: pixelated;
+}
+
+/* ============================================
+   TITLE BAR
+   ============================================ */
+
+.retro-titlebar {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  background: var(--win98-titlebar-active);
+  padding: 2px 3px;
+  gap: 4px;
+}
+
+.retro-titlebar-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.retro-titlebar-icon img {
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+.retro-titlebar-text {
+  flex: 1;
+  color: var(--win98-titlebar-text);
+  font-weight: bold;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 2px;
+}
+
+.retro-titlebar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.retro-titlebar-button {
+  width: 16px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--win98-button-face);
+  border: 1px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+}
+
+.retro-titlebar-button:active {
+  border-color: var(--win98-button-dark-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-dark-shadow);
+}
+
+.retro-titlebar-close {
+  background: var(--win98-button-face);
+}
+
+.retro-titlebar-close:hover {
+  background: #c0504d;
+}
+
+/* ============================================
+   HEADER (MENU BAR + TOOLBAR)
+   ============================================ */
+
+.retro-header {
+  background: var(--win98-window-bg);
+}
+
+/* Menu Bar */
+.retro-menubar {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 4px;
+  gap: 0;
+  border-bottom: 1px solid var(--win98-button-shadow);
+}
+
+.retro-menu-item {
+  padding: 2px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-menu-item:hover {
+  background: var(--win98-menu-highlight);
+  color: var(--win98-menu-highlight-text);
+}
+
+.retro-menu-item .underline {
+  text-decoration: underline;
+}
+
+/* Toolbar */
+.retro-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  gap: 2px;
+  border-bottom: 1px solid var(--win98-button-shadow);
+  flex-wrap: wrap;
+}
+
+.retro-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.retro-toolbar-separator {
+  width: 2px;
+  height: 24px;
+  margin: 0 4px;
+  background: linear-gradient(
+    to right,
+    var(--win98-button-shadow) 0%,
+    var(--win98-button-shadow) 50%,
+    var(--win98-button-highlight) 50%,
+    var(--win98-button-highlight) 100%
+  );
+}
+
+.retro-toolbar-spacer {
+  flex: 1;
+}
+
+.retro-toolbar-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  min-width: 44px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: var(--win98-button-text);
+}
+
+.retro-toolbar-button:hover {
+  border-color: var(--win98-button-highlight) var(--win98-button-shadow)
+    var(--win98-button-shadow) var(--win98-button-highlight);
+}
+
+.retro-toolbar-button:active {
+  border-color: var(--win98-button-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-shadow);
+  padding: 3px 7px 1px 9px;
+}
+
+.retro-toolbar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.retro-toolbar-label {
+  font-size: 10px;
+  margin-top: 1px;
+}
+
+/* ============================================
+   ADDRESS BAR
+   ============================================ */
+
+.retro-addressbar {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 2px 4px;
+  gap: 4px;
+  background: var(--win98-window-bg);
+  border-bottom: 1px solid var(--win98-button-shadow);
+}
+
+.retro-addressbar-label {
+  font-size: 11px;
+  color: var(--win98-button-text);
+  padding: 0 4px;
+}
+
+.retro-addressbar-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: var(--win98-input-bg);
+  border: 2px solid;
+  border-color: var(--win98-input-border-dark) var(--win98-input-bg)
+    var(--win98-input-bg) var(--win98-input-border-dark);
+  height: 20px;
+}
+
+.retro-addressbar-icon {
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-addressbar-icon img {
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+}
+
+.retro-addressbar-input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 0 4px;
+  background: var(--win98-input-bg);
+  color: var(--win98-button-text);
+}
+
+.retro-addressbar-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 100%;
+  background: var(--win98-button-face);
+  border: 1px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-shadow)
+    var(--win98-button-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+}
+
+.retro-addressbar-go {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  background: var(--win98-button-face);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-addressbar-go:active {
+  border-color: var(--win98-button-dark-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-dark-shadow);
+}
+
+.retro-addressbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-addressbar-links:hover {
+  border-color: var(--win98-button-highlight) var(--win98-button-shadow)
+    var(--win98-button-shadow) var(--win98-button-highlight);
+}
+
+/* ============================================
+   CONTENT AREA
+   ============================================ */
+
+.retro-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background: var(--win98-content-bg);
+}
+
+.retro-main {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+/* Retro Scrollbar */
+.retro-content::-webkit-scrollbar,
+.retro-main::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.retro-content::-webkit-scrollbar-track,
+.retro-main::-webkit-scrollbar-track {
+  background: var(--win98-scrollbar-bg);
+}
+
+.retro-content::-webkit-scrollbar-thumb,
+.retro-main::-webkit-scrollbar-thumb {
+  background: var(--win98-button-face);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+}
+
+.retro-content::-webkit-scrollbar-corner,
+.retro-main::-webkit-scrollbar-corner {
+  background: var(--win98-scrollbar-bg);
+}
+
+/* ============================================
+   FOOTER (STATUS BAR)
+   ============================================ */
+
+.retro-footer {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  background: var(--win98-status-bg);
+  border-top: 1px solid var(--win98-button-highlight);
+  padding: 0 2px;
+}
+
+.retro-footer-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid;
+  border-color: var(--win98-button-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-shadow);
+  margin: 1px;
+}
+
+.retro-footer-status-text {
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-footer-progress {
+  width: 100px;
+  height: 18px;
+  border: 1px solid;
+  border-color: var(--win98-button-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-shadow);
+  margin: 1px;
+}
+
+.retro-footer-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--win98-menu-highlight);
+}
+
+.retro-footer-zone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 8px;
+  border: 1px solid;
+  border-color: var(--win98-button-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-shadow);
+  margin: 1px;
+}
+
+.retro-footer-zone-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--win98-button-text);
+}
+
+.retro-footer-zone-indicator.connected {
+  color: #22c55e;
+}
+
+.retro-footer-zone-text {
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+/* ============================================
+   RETRO BUTTON COMPONENT
+   ============================================ */
+
+.retro-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  background: var(--win98-button-face);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-button:hover {
+  background: var(--win98-button-face);
+}
+
+.retro-button:active,
+.retro-button-active {
+  border-color: var(--win98-button-dark-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-dark-shadow);
+  padding: 5px 11px 3px 13px;
+}
+
+.retro-button-disabled,
+.retro-button:disabled {
+  color: var(--win98-button-shadow);
+  cursor: not-allowed;
+}
+
+.retro-button-toolbar {
+  padding: 2px 4px;
+  border-width: 1px;
+}
+
+.retro-button-menu {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+}
+
+.retro-button-menu:hover {
+  border-color: var(--win98-button-highlight) var(--win98-button-shadow)
+    var(--win98-button-shadow) var(--win98-button-highlight);
+}
+
+/* ============================================
+   RETRO WINDOW COMPONENT
+   ============================================ */
+
+.retro-window {
+  display: flex;
+  flex-direction: column;
+  background: var(--win98-window-bg);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  box-shadow: 1px 1px 0 var(--win98-button-dark-shadow);
+}
+
+.retro-window-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  background: var(--win98-titlebar-active);
+  padding: 2px 3px;
+}
+
+.retro-window-title {
+  color: var(--win98-titlebar-text);
+  font-weight: bold;
+  font-size: 11px;
+  padding-left: 4px;
+}
+
+.retro-window-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.retro-window-control {
+  width: 16px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--win98-button-face);
+  border: 1px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+}
+
+.retro-window-control:active {
+  border-color: var(--win98-button-dark-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-dark-shadow);
+}
+
+.retro-window-control-close:hover {
+  background: #c0504d;
+}
+
+.retro-window-content {
+  flex: 1;
+  padding: 8px;
+  background: var(--win98-window-bg);
+}
+
+/* ============================================
+   RETRO INPUT COMPONENT
+   ============================================ */
+
+.retro-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.retro-input-label {
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+.retro-input {
+  height: 22px;
+  padding: 2px 4px;
+  background: var(--win98-input-bg);
+  border: 2px solid;
+  border-color: var(--win98-input-border-dark) var(--win98-input-bg)
+    var(--win98-input-bg) var(--win98-input-border-dark);
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--win98-button-text);
+  outline: none;
+}
+
+.retro-input:focus {
+  border-color: var(--win98-input-border-dark) var(--win98-input-bg)
+    var(--win98-input-bg) var(--win98-input-border-dark);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.retro-inset {
+  border: 2px solid;
+  border-color: var(--win98-button-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-shadow);
+}
+
+.retro-outset {
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-shadow)
+    var(--win98-button-shadow) var(--win98-button-highlight);
+}
+
+.retro-text {
+  font-family: "Tahoma", "MS Sans Serif", "Segoe UI", sans-serif;
+  font-size: 11px;
+  color: var(--win98-button-text);
+}
+
+/* Pixel art rendering */
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}

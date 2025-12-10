@@ -1,0 +1,325 @@
+# TODO: Retro Pixel Art - Open World Builder
+
+> แรงบันดาลใจจากเกม Stardew Valley - สร้างสวนเล็กๆ ที่มีต้นไม้
+
+---
+
+## 🎯 Project Overview
+
+**Tech Stack:**
+
+- **Frontend:** Next.js (App Router) + TypeScript
+- **3D Rendering:** React Three Fiber + Rapier Physics
+- **Game Server:** Colyseus (realtime-server)
+- **State Management:** Zustand + localforage (persist)
+- **Styling:** Tailwind CSS
+- **UI Theme:** Retro Pixel Art - Internet Explorer 5 Browser Style
+
+---
+
+## 📋 Phase 1: Core Foundation (No Database)
+
+### 1.1 🖼️ MainLayout - IE5 Browser Style
+
+> ออกแบบ interface จำลอง Internet Explorer 5 Browser บน Windows 98
+
+- [ ] **สร้าง Theme Provider** (`src/presentation/providers/ThemeProvider.tsx`)
+
+  - [ ] ติดตั้ง next-themes สำหรับ dark/light mode
+  - [ ] สร้าง ThemeProvider wrapper component
+
+- [ ] **สร้าง MainLayout Component** (`src/presentation/components/layout/MainLayout.tsx`)
+
+  - [ ] IE5 Title Bar (พร้อมปุ่ม minimize, maximize, close)
+  - [ ] IE5 Menu Bar (File, Edit, View, Favorites, Tools, Help)
+  - [ ] IE5 Toolbar (Back, Forward, Stop, Refresh, Home, Search, Favorites, History, Mail, Print)
+  - [ ] IE5 Address Bar (พร้อม Go button และ Links dropdown)
+  - [ ] Main Content Area (สำหรับ children)
+  - [ ] IE5 Status Bar (พร้อม progress indicator)
+  - [ ] Sidebar Navigation (เหมือน Wikipedia/Explorer sidebar)
+
+- [ ] **สร้าง Header Component** (`src/presentation/components/layout/Header.tsx`)
+
+  - [ ] IE5 style toolbar buttons
+  - [ ] Theme Toggle button (Dark/Light mode)
+  - [ ] Pixel art icons
+
+- [ ] **สร้าง Footer Component** (`src/presentation/components/layout/Footer.tsx`)
+
+  - [ ] IE5 Status Bar style
+  - [ ] Connection status indicator
+  - [ ] Internet zone indicator
+
+- [ ] **สร้าง Retro Pixel Art CSS/Styling**
+  - [ ] Windows 98 color palette
+  - [ ] Pixel art borders (3D beveled edges)
+  - [ ] Retro fonts (MS Sans Serif style)
+  - [ ] Button styles (pressed/hover states)
+
+### 1.2 👤 User System (Local Storage Only)
+
+> ไม่ต้อง login - สร้าง user เก็บลง local ด้วย zustand persist
+
+- [ ] **สร้าง User Store** (`src/presentation/stores/userStore.ts`)
+
+  - [ ] User interface: { id, nickname, avatar, createdAt }
+  - [ ] Zustand store with localforage persistence
+  - [ ] generateUserId() function
+  - [ ] createUser(), updateUser() actions
+
+- [ ] **สร้าง User Creation Flow**
+  - [ ] First-time visitor detection
+  - [ ] Nickname input modal (retro style)
+  - [ ] Avatar selection (pixel art avatars)
+
+### 1.3 🏠 Landing Page
+
+> หน้าแรกต้อนรับผู้เล่น
+
+- [ ] **สร้าง Landing Page** (`app/page.tsx`)
+
+  - [ ] ตาม CREATE_PAGE_PATTERN.md
+  - [ ] Presenter: `src/presentation/presenters/landing/LandingPresenter.ts`
+  - [ ] Hook: `src/presentation/presenters/landing/useLandingPresenter.ts`
+  - [ ] View: `src/presentation/components/landing/LandingView.tsx`
+
+- [ ] **Landing Page Features**
+  - [ ] Hero section (Pixel art banner)
+  - [ ] Game title "Retro Pixel Garden"
+  - [ ] "Start Game" button
+  - [ ] "Continue" button (if user exists)
+  - [ ] Credits/About section
+
+### 1.4 🎮 Colyseus Game Server Setup
+
+> realtime-server ที่ /Users/marosdeeuma/retro-pixel-art-nextjs/realtime-server
+
+- [ ] **สร้าง Game Room** (`realtime-server/src/rooms/GardenRoom.ts`)
+
+  - [ ] Room state schema (Colyseus Schema)
+  - [ ] Player state (position, inventory, etc.)
+  - [ ] World state (tiles, objects, trees)
+  - [ ] Sync mechanisms
+
+- [ ] **สร้าง Game State Schema** (`realtime-server/src/schemas/`)
+
+  - [ ] PlayerSchema (id, x, y, direction, nickname)
+  - [ ] TileSchema (type, x, y, plantedAt)
+  - [ ] TreeSchema (type, x, y, growthStage)
+  - [ ] WorldSchema (tiles, trees, players)
+
+- [ ] **สร้าง Game Client** (`src/infrastructure/colyseus/GameClient.ts`)
+  - [ ] Colyseus.js client setup
+  - [ ] Room connection management
+  - [ ] State synchronization hooks
+
+### 1.5 🌳 Game World (React Three + Rapier)
+
+> สวนเล็กๆ แบบ Stardew Valley
+
+- [ ] **สร้าง Game Page** (`app/game/page.tsx`)
+
+  - [ ] ตาม CREATE_PAGE_PATTERN.md
+  - [ ] Presenter: `src/presentation/presenters/game/GamePresenter.ts`
+  - [ ] Hook: `src/presentation/presenters/game/useGamePresenter.ts`
+  - [ ] View: `src/presentation/components/game/GameView.tsx`
+
+- [ ] **สร้าง 3D Canvas Component** (`src/presentation/components/game/GameCanvas.tsx`)
+
+  - [ ] React Three Fiber canvas setup
+  - [ ] Rapier physics world
+  - [ ] Camera controls (isometric/top-down view)
+  - [ ] Pixel art shader/materials
+
+- [ ] **สร้าง World Components**
+  - [ ] Ground/Terrain (`src/presentation/components/game/world/Ground.tsx`)
+  - [ ] Grass tiles (pixel art texture)
+  - [ ] Dirt tiles
+  - [ ] Water tiles
+- [ ] **สร้าง Object Components**
+
+  - [ ] Tree (`src/presentation/components/game/objects/Tree.tsx`)
+  - [ ] Bush (`src/presentation/components/game/objects/Bush.tsx`)
+  - [ ] Fence (`src/presentation/components/game/objects/Fence.tsx`)
+  - [ ] Path (`src/presentation/components/game/objects/Path.tsx`)
+
+- [ ] **สร้าง Player Component** (`src/presentation/components/game/Player.tsx`)
+
+  - [ ] Character sprite (pixel art)
+  - [ ] Movement controls (WASD/Arrow keys)
+  - [ ] Animation states (idle, walk, action)
+  - [ ] Collision detection
+
+- [ ] **สร้าง Game UI Overlay**
+  - [ ] Inventory bar
+  - [ ] Mini-map
+  - [ ] Player stats
+  - [ ] Action buttons
+
+### 1.6 🔧 Utilities & Helpers
+
+- [ ] **สร้าง Pixel Art Helpers**
+
+  - [ ] Sprite sheet loader
+  - [ ] Pixel-perfect rendering utilities
+  - [ ] Color palette constants
+
+- [ ] **สร้าง Game Utils**
+  - [ ] Tile position helpers
+  - [ ] Collision detection utils
+  - [ ] Random generation for world
+
+---
+
+## 📁 Project Structure (Atomic Design + Clean Architecture)
+
+```
+retro-pixel-art-nextjs/
+├── app/
+│   ├── layout.tsx                    # Root layout with ThemeProvider
+│   ├── page.tsx                      # Landing page
+│   └── game/
+│       └── page.tsx                  # Game page
+├── src/
+│   ├── domain/
+│   │   └── types/
+│   │       ├── user.ts               # User type definitions
+│   │       ├── game.ts               # Game state types
+│   │       └── world.ts              # World/Tile types
+│   ├── presentation/
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── MainLayout.tsx    # IE5 Browser layout
+│   │   │   │   ├── Header.tsx        # IE5 Toolbar
+│   │   │   │   ├── Footer.tsx        # IE5 Status bar
+│   │   │   │   ├── Sidebar.tsx       # Navigation sidebar
+│   │   │   │   └── AddressBar.tsx    # IE5 Address bar
+│   │   │   ├── landing/
+│   │   │   │   └── LandingView.tsx
+│   │   │   ├── game/
+│   │   │   │   ├── GameView.tsx
+│   │   │   │   ├── GameCanvas.tsx
+│   │   │   │   ├── Player.tsx
+│   │   │   │   ├── world/
+│   │   │   │   │   ├── Ground.tsx
+│   │   │   │   │   └── Terrain.tsx
+│   │   │   │   └── objects/
+│   │   │   │       ├── Tree.tsx
+│   │   │   │       ├── Bush.tsx
+│   │   │   │       └── Fence.tsx
+│   │   │   └── ui/
+│   │   │       ├── RetroButton.tsx   # Windows 98 style button
+│   │   │       ├── RetroWindow.tsx   # Windows 98 style window
+│   │   │       ├── RetroInput.tsx    # Retro input field
+│   │   │       └── ThemeToggle.tsx   # Dark/Light toggle
+│   │   ├── presenters/
+│   │   │   ├── landing/
+│   │   │   │   ├── LandingPresenter.ts
+│   │   │   │   └── useLandingPresenter.ts
+│   │   │   └── game/
+│   │   │       ├── GamePresenter.ts
+│   │   │       └── useGamePresenter.ts
+│   │   ├── providers/
+│   │   │   └── ThemeProvider.tsx
+│   │   └── stores/
+│   │       ├── userStore.ts          # User state (zustand + localforage)
+│   │       └── gameStore.ts          # Game UI state
+│   └── infrastructure/
+│       └── colyseus/
+│           └── GameClient.ts         # Colyseus client
+├── realtime-server/                   # Colyseus server (existing)
+│   └── src/
+│       ├── rooms/
+│       │   └── GardenRoom.ts
+│       └── schemas/
+│           ├── PlayerSchema.ts
+│           ├── WorldSchema.ts
+│           └── index.ts
+└── public/
+    ├── sprites/                       # Pixel art sprites
+    ├── textures/                      # Ground textures
+    └── fonts/                         # Retro fonts
+```
+
+---
+
+## 🚀 Development Priority Order
+
+### Sprint 1: Foundation (Current)
+
+1. ✅ สร้าง TODO.md
+2. ⏳ **สร้าง MainLayout (IE5 Browser style)**
+3. ⏳ สร้าง Theme Provider + Theme Toggle
+4. ⏳ สร้าง Retro UI Components (Button, Window, Input)
+
+### Sprint 2: User & Landing
+
+5. ⏳ สร้าง User Store (zustand + localforage)
+6. ⏳ สร้าง Landing Page
+
+### Sprint 3: Game Server
+
+7. ⏳ Setup Colyseus Game Room
+8. ⏳ สร้าง Game State Schemas
+9. ⏳ สร้าง Game Client
+
+### Sprint 4: Game World
+
+10. ⏳ สร้าง Game Canvas (R3F + Rapier)
+11. ⏳ สร้าง World Components (Ground, Trees)
+12. ⏳ สร้าง Player Component + Controls
+
+### Sprint 5: Polish
+
+13. ⏳ Game UI Overlay
+14. ⏳ Sound effects (optional)
+15. ⏳ Performance optimization
+
+---
+
+## 📝 Notes
+
+### Pattern Rules
+
+- ทุก page.tsx ต้องตาม `/prompt/CREATE_PAGE_PATTERN.md`
+- ใช้ Clean Architecture + SOLID principles
+- ใช้ Atomic Design structure
+
+### Phase 2 (Future)
+
+- เก็บข้อมูลลง Supabase database
+- ระบบ login ด้วย Supabase Auth
+- Cloud save/load
+
+---
+
+## 🎨 IE5 Browser Design Reference
+
+จากรูป `/prompt/internet_explorer_5_on_windows_98.png`:
+
+1. **Title Bar** (สีน้ำเงินเข้ม gradient)
+   - Window title + minimize/maximize/close buttons
+2. **Menu Bar** (พื้นหลังเทา)
+
+   - File | Edit | View | Favorites | Tools | Help
+
+3. **Toolbar** (icons + labels)
+
+   - Back, Forward, Stop, Refresh, Home
+   - Search, Favorites, History, Mail, Print
+
+4. **Address Bar**
+
+   - "Address" label + input field + Go button + Links dropdown
+
+5. **Content Area**
+
+   - Main page content
+   - Optional sidebar (navigation)
+
+6. **Status Bar**
+   - "Done" status + Progress bar + Zone indicator (Internet)
+
+---
+
+_Last Updated: 2024_
