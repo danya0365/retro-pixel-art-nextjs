@@ -7,40 +7,69 @@ import * as THREE from "three";
 
 interface CameraControllerProps {
   target?: { x: number; y: number; z: number } | null;
-  offset?: [number, number, number];
+  playerRotation?: number; // Player's facing direction
+  isMoving?: boolean;
+  cameraDistance?: number;
+  cameraHeight?: number;
   smoothness?: number;
 }
 
 export function CameraController({
   target,
-  offset = [10, 10, 10],
+  playerRotation = 0,
+  isMoving = false,
+  cameraDistance = 12,
+  cameraHeight = 8,
   smoothness = 0.05,
 }: CameraControllerProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
   const targetPosition = useRef(new THREE.Vector3());
-  const cameraOffset = useRef(new THREE.Vector3(...offset));
+  const currentCameraAngle = useRef(Math.PI); // Start behind player
+  const isUserRotating = useRef(false);
+  const lastUserInteraction = useRef(0);
 
   useFrame(() => {
     if (!target || !controlsRef.current) return;
 
-    // Smoothly interpolate target position
-    targetPosition.current.lerp(
-      new THREE.Vector3(target.x, target.y + 1, target.z),
-      smoothness
-    );
+    // Smoothly interpolate target position (player position)
+    const playerPos = new THREE.Vector3(target.x, target.y + 1, target.z);
+    targetPosition.current.lerp(playerPos, smoothness * 2);
 
     // Update OrbitControls target
     controlsRef.current.target.copy(targetPosition.current);
 
-    // Calculate desired camera position (target + offset)
-    const desiredCameraPos = targetPosition.current
-      .clone()
-      .add(cameraOffset.current);
+    // Calculate desired camera angle
+    // When player is moving, rotate camera behind them
+    const timeSinceInteraction = Date.now() - lastUserInteraction.current;
+    const shouldFollowPlayer = isMoving && timeSinceInteraction > 500;
+
+    if (shouldFollowPlayer) {
+      // Camera should be behind player (player rotation + PI)
+      const desiredAngle = playerRotation + Math.PI;
+
+      // Smoothly rotate camera angle
+      let angleDiff = desiredAngle - currentCameraAngle.current;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+      currentCameraAngle.current += angleDiff * smoothness * 2;
+    }
+
+    // Calculate camera position based on angle
+    const cameraX =
+      targetPosition.current.x +
+      Math.sin(currentCameraAngle.current) * cameraDistance;
+    const cameraZ =
+      targetPosition.current.z +
+      Math.cos(currentCameraAngle.current) * cameraDistance;
+    const cameraY = targetPosition.current.y + cameraHeight;
+
+    const desiredCameraPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
 
     // Smoothly move camera
-    camera.position.lerp(desiredCameraPos, smoothness * 0.5);
+    camera.position.lerp(desiredCameraPos, smoothness);
   });
 
   return (
@@ -54,13 +83,18 @@ export function CameraController({
       enablePan={false}
       enableDamping
       dampingFactor={0.1}
-      onChange={() => {
-        // Update offset when user manually rotates camera
-        if (target && controlsRef.current) {
-          const newOffset = camera.position
-            .clone()
-            .sub(new THREE.Vector3(target.x, target.y + 1, target.z));
-          cameraOffset.current.copy(newOffset);
+      onStart={() => {
+        isUserRotating.current = true;
+        lastUserInteraction.current = Date.now();
+      }}
+      onEnd={() => {
+        isUserRotating.current = false;
+        lastUserInteraction.current = Date.now();
+        // Update current angle based on where user rotated to
+        if (target) {
+          const dx = camera.position.x - target.x;
+          const dz = camera.position.z - target.z;
+          currentCameraAngle.current = Math.atan2(dx, dz);
         }
       }}
     />

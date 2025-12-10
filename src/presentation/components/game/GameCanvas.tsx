@@ -9,7 +9,7 @@ import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
 import { Environment, Grid } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
-import { Suspense } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { CameraController } from "./CameraController";
 import { LocalPlayer } from "./LocalPlayer";
 import { Bench } from "./objects/Bench";
@@ -60,6 +60,19 @@ export function GameCanvas({
   const localPlayer = players.find((p) => p.clientId === localPlayerId);
   // Get remote players (everyone except local player)
   const remotePlayers = players.filter((p) => p.clientId !== localPlayerId);
+
+  // Track player rotation and movement for camera
+  const [playerRotation, setPlayerRotation] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
+
+  // Callback for LocalPlayer to report its state
+  const handlePlayerStateChange = useCallback(
+    (rotation: number, moving: boolean) => {
+      setPlayerRotation(rotation);
+      setIsMoving(moving);
+    },
+    []
+  );
 
   // Get selected item from hotbar
   const getSelectedItem = useHotbarStore((state) => state.getSelectedItem);
@@ -157,6 +170,7 @@ export function GameCanvas({
                 }}
                 onInput={onPlayerInput}
                 onAction={handleAction}
+                onStateChange={handlePlayerStateChange}
               />
             )}
 
@@ -218,6 +232,8 @@ export function GameCanvas({
                 ? { x: localPlayer.x, y: localPlayer.y, z: localPlayer.z }
                 : null
             }
+            playerRotation={playerRotation}
+            isMoving={isMoving}
           />
         </Suspense>
       </Canvas>

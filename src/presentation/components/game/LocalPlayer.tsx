@@ -20,18 +20,24 @@ interface LocalPlayerProps {
     direction: string;
   }) => void;
   onAction?: (x: number, z: number) => void;
+  onStateChange?: (rotation: number, isMoving: boolean) => void;
 }
 
 const MOVE_SPEED = 5;
+const ROTATION_SPEED = 10; // How fast player rotates to face movement direction
 
 export function LocalPlayer({
   user,
   serverPosition,
   onInput,
   onAction,
+  onStateChange,
 }: LocalPlayerProps) {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const meshRef = useRef<THREE.Group>(null);
+  const playerRotation = useRef(0); // Current player rotation
+  const targetRotation = useRef(0); // Target rotation based on movement
+
   const [keys, setKeys] = useState({
     forward: false,
     backward: false,
@@ -45,25 +51,11 @@ export function LocalPlayer({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "KeyE" && onAction && rigidBodyRef.current) {
         const pos = rigidBodyRef.current.translation();
-        // Action slightly in front of player based on direction
-        const offset = 1;
-        let actionX = pos.x;
-        let actionZ = pos.z;
-
-        switch (direction) {
-          case "up":
-            actionZ -= offset;
-            break;
-          case "down":
-            actionZ += offset;
-            break;
-          case "left":
-            actionX -= offset;
-            break;
-          case "right":
-            actionX += offset;
-            break;
-        }
+        // Action in front of player based on current rotation
+        const offset = 1.5;
+        const rotation = playerRotation.current;
+        const actionX = pos.x + Math.sin(rotation) * offset;
+        const actionZ = pos.z + Math.cos(rotation) * offset;
 
         onAction(Math.round(actionX), Math.round(actionZ));
       }
@@ -71,7 +63,7 @@ export function LocalPlayer({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onAction, direction]);
+  }, [onAction]);
 
   // Sync with server position when it changes significantly
   useEffect(() => {
@@ -152,22 +144,46 @@ export function LocalPlayer({
   const inputThrottle = useRef(0);
 
   // Update player movement and send input to server
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!rigidBodyRef.current) return;
 
+    // Input for forward/backward movement
+    let inputZ = 0;
+
+    // A/D = rotate player left/right
+    if (keys.left) {
+      targetRotation.current += delta * ROTATION_SPEED * 0.5;
+    }
+    if (keys.right) {
+      targetRotation.current -= delta * ROTATION_SPEED * 0.5;
+    }
+
+    // Smoothly rotate player towards target
+    if (meshRef.current) {
+      const currentRot = playerRotation.current;
+      const targetRot = targetRotation.current;
+
+      // Handle angle wrapping
+      let diff = targetRot - currentRot;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+
+      // Lerp rotation
+      playerRotation.current += diff * Math.min(delta * ROTATION_SPEED, 1);
+      meshRef.current.rotation.y = playerRotation.current;
+    }
+
+    // W/S = move forward/backward in player's facing direction
     let velocityX = 0;
     let velocityZ = 0;
 
-    if (keys.forward) velocityZ = -1;
-    if (keys.backward) velocityZ = 1;
-    if (keys.left) velocityX = -1;
-    if (keys.right) velocityX = 1;
+    if (keys.forward) inputZ = -1;
+    if (keys.backward) inputZ = 1;
 
-    // Normalize diagonal movement
-    if (velocityX !== 0 && velocityZ !== 0) {
-      const length = Math.sqrt(velocityX * velocityX + velocityZ * velocityZ);
-      velocityX /= length;
-      velocityZ /= length;
+    if (inputZ !== 0) {
+      // Move in the direction the player is facing
+      velocityX = Math.sin(playerRotation.current) * -inputZ;
+      velocityZ = Math.cos(playerRotation.current) * -inputZ;
     }
 
     // Send input to server when velocity changes OR throttled updates while moving
@@ -194,13 +210,9 @@ export function LocalPlayer({
       true
     );
 
-    // Rotate player to face movement direction
-    if (velocityX !== 0 || velocityZ !== 0) {
-      const angle = Math.atan2(velocityX, velocityZ);
-      if (meshRef.current) {
-        meshRef.current.rotation.y = angle;
-      }
-    }
+    // Report state to camera controller
+    const isCurrentlyMoving = velocityX !== 0 || velocityZ !== 0;
+    onStateChange?.(playerRotation.current, isCurrentlyMoving);
   });
 
   return (
