@@ -11,6 +11,7 @@ import { useCallback, useState } from "react";
 import { BattleView } from "./BattleView";
 import { CharacterMiniStatus, CharacterPanel } from "./CharacterPanel";
 import { MonsterHunting } from "./MonsterHunting";
+import { PlayerProfileModal } from "./PlayerProfileModal";
 
 interface SimpleGameViewProps {
   user: User;
@@ -87,6 +88,9 @@ export function SimpleGameView({
   ]);
   const [highestClearedStage, setHighestClearedStage] = useState(0);
   const [currentBattle, setCurrentBattle] = useState<BattleStage | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<GardenPlayer | null>(
+    null
+  );
 
   const hotbarItems = useHotbarStore((state) => state.items);
   const selectedSlot = useHotbarStore((state) => state.selectedSlot);
@@ -371,18 +375,20 @@ export function SimpleGameView({
               {activeTab === "players" && (
                 <div>
                   <p className="text-xs mb-2 text-[var(--win98-button-text)]">
-                    ผู้เล่นออนไลน์:
+                    ผู้เล่นออนไลน์: (คลิกเพื่อดูโปรไฟล์)
                   </p>
                   <div className="space-y-1">
                     {players.map((player) => (
-                      <div
+                      <button
                         key={player.id}
+                        onClick={() => setSelectedPlayer(player)}
                         className={`
-                          p-2 border flex items-center gap-2 text-xs
+                          w-full p-2 border flex items-center gap-2 text-xs text-left
+                          transition-all hover:scale-[1.01] cursor-pointer
                           ${
                             player.clientId === localPlayerId
-                              ? "bg-blue-100 border-blue-300"
-                              : "bg-[var(--win98-button-face)] border-[var(--win98-button-shadow)]"
+                              ? "bg-blue-100 border-blue-300 hover:bg-blue-200"
+                              : "bg-[var(--win98-button-face)] border-[var(--win98-button-shadow)] hover:bg-[var(--win98-button-highlight)]"
                           }
                         `}
                       >
@@ -397,7 +403,7 @@ export function SimpleGameView({
                           📍 {player.x.toFixed(0)}, {player.z.toFixed(0)}
                         </span>
                         <span>{player.isMoving ? "🚶" : "🧍"}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -539,6 +545,15 @@ export function SimpleGameView({
           </div>
         </div>
       </div>
+
+      {/* Player Profile Modal */}
+      {selectedPlayer && (
+        <PlayerProfileModal
+          player={selectedPlayer}
+          isOpen={!!selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   );
 }
