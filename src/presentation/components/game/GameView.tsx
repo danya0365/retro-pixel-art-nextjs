@@ -50,7 +50,7 @@ export function GameView() {
  */
 function GameWithMultiplayer() {
   const user = useUser()!;
-  const [isSimpleMode, setIsSimpleMode] = useState(false);
+  const [isSimpleMode, setIsSimpleMode] = useState(true);
 
   const {
     isConnected,
@@ -91,22 +91,22 @@ function GameWithMultiplayer() {
 
   return (
     <div className="relative w-full h-full min-h-[calc(100vh-140px)] bg-[var(--win98-content-bg)]">
-      {/* Mode Toggle Button */}
-      <div className="absolute top-2 right-2 z-50">
+      {/* Mode Toggle Button - Bottom Left */}
+      <div className="absolute bottom-4 left-4 z-40">
         <button
           onClick={() => setIsSimpleMode(!isSimpleMode)}
-          className="retro-button flex items-center gap-2 px-3 py-1.5 text-xs"
+          className="retro-button flex items-center gap-2 px-3 py-1.5 text-xs shadow-lg"
           title={isSimpleMode ? "Switch to 3D Mode" : "Switch to Simple Mode"}
         >
           {isSimpleMode ? (
             <>
               <Gamepad2 className="w-4 h-4" />
-              <span>3D Mode</span>
+              <span>🎮 3D Mode</span>
             </>
           ) : (
             <>
               <Monitor className="w-4 h-4" />
-              <span>Simple Mode</span>
+              <span>📺 Simple Mode</span>
             </>
           )}
         </button>

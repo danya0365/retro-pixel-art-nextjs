@@ -1,6 +1,7 @@
-# TODO: Retro Pixel Art - Open World Builder
+# TODO: Retro Pixel Garden - RPG Adventure
 
-> แรงบันดาลใจจากเกม Stardew Valley - สร้างสวนเล็กๆ ที่มีต้นไม้
+> แรงบันดาลใจจากเกม Stardew Valley + Dragon Quest Tact
+> 🌾 ปลูกผัก + ⚔️ สู้มอนสเตอร์แบบ Grid Battle
 
 ---
 
@@ -9,11 +10,16 @@
 **Tech Stack:**
 
 - **Frontend:** Next.js (App Router) + TypeScript
-- **3D Rendering:** React Three Fiber + Rapier Physics
+- **3D Rendering:** React Three Fiber + Rapier Physics (Optional/Future)
 - **Game Server:** Colyseus (realtime-server)
 - **State Management:** Zustand + localforage (persist)
 - **Styling:** Tailwind CSS
-- **UI Theme:** Retro Pixel Art - Internet Explorer 5 Browser Style
+- **UI Theme:** Retro Pixel Art - Internet Explorer 5 Browser Style (Win98)
+
+**Game Modes:**
+
+- **Simple Mode (Primary):** Text-based UI ในสไตล์ Win98 - ทำงานได้ทุกอุปกรณ์
+- **3D Mode (Future):** React Three Fiber สำหรับ visual experience
 
 ---
 
@@ -292,39 +298,161 @@ retro-pixel-art-nextjs/
 
 ---
 
+---
+
+## 📋 Phase 2: Simple Mode RPG System 🎮
+
+> โฟกัส Simple Mode เป็นหลัก - Text-based RPG แบบ Dragon Quest Tact
+
+### 2.1 📺 Simple Mode Foundation
+
+- [x] **สร้าง SimpleGameView** (`src/presentation/components/game/SimpleGameView.tsx`) ✅
+  - [x] Mode toggle button (3D ↔ Simple)
+  - [x] Farm grid 6x6 สำหรับปลูกผัก
+  - [x] Inventory tab
+  - [x] Players tab
+  - [x] Activity log (terminal style)
+  - [x] Quick actions (รดน้ำทั้งหมด, เก็บเกี่ยวทั้งหมด)
+
+### 2.2 👤 Character Status System (RPG Style)
+
+> เหมือน Dragon Quest Tact - status ตัวละครแบบ RPG
+
+- [ ] **สร้าง Character Store** (`src/presentation/stores/characterStore.ts`)
+
+  - [ ] Level, EXP, Next Level EXP
+  - [ ] HP / Max HP
+  - [ ] MP / Max MP (Mana สำหรับ skill)
+  - [ ] STR (Strength) - พลังโจมตี
+  - [ ] DEF (Defense) - พลังป้องกัน
+  - [ ] AGI (Agility) - ความเร็ว/ลำดับการโจมตี
+  - [ ] LUK (Luck) - โชค/critical rate
+  - [ ] Equipment slots (Weapon, Armor, Accessory)
+
+- [ ] **สร้าง CharacterPanel** (`src/presentation/components/game/CharacterPanel.tsx`)
+  - [ ] Avatar + Name + Level
+  - [ ] HP/MP bars
+  - [ ] Stats display
+  - [ ] Equipment display
+  - [ ] EXP progress bar
+
+### 2.3 ⚔️ Grid Battle System
+
+> Turn-based tactical combat บน Grid เหมือน Dragon Quest Tact
+
+- [ ] **สร้าง Battle Store** (`src/presentation/stores/battleStore.ts`)
+
+  - [ ] Battle state (idle, in_battle, victory, defeat)
+  - [ ] Turn order queue
+  - [ ] Current turn (player/enemy)
+  - [ ] Selected action (attack, skill, item, move)
+  - [ ] Target selection
+
+- [ ] **สร้าง BattleGrid** (`src/presentation/components/battle/BattleGrid.tsx`)
+
+  - [ ] 8x8 tactical grid
+  - [ ] Unit placement (player, allies, enemies)
+  - [ ] Movement range highlight
+  - [ ] Attack range highlight
+  - [ ] Terrain effects (optional)
+
+- [ ] **สร้าง BattleUI** (`src/presentation/components/battle/BattleUI.tsx`)
+
+  - [ ] Action menu (Attack, Skill, Item, Move, Wait)
+  - [ ] Turn order display
+  - [ ] Battle log
+  - [ ] Enemy HP bars
+
+- [ ] **สร้าง Monster Database** (`src/domain/data/monsters.ts`)
+  - [ ] Slime, Goblin, Skeleton (basic monsters)
+  - [ ] Monster stats (HP, ATK, DEF, AGI)
+  - [ ] Drop items
+  - [ ] EXP reward
+
+### 2.4 🗺️ World Map & Exploration
+
+- [ ] **สร้าง WorldMap** (`src/presentation/components/game/WorldMap.tsx`)
+
+  - [ ] Location nodes (Farm, Forest, Cave, Village)
+  - [ ] Travel between locations
+  - [ ] Random encounter rate
+  - [ ] Location descriptions
+
+- [ ] **สร้าง Location System**
+  - [ ] Farm (ปลูกผัก, พักฟื้น HP)
+  - [ ] Forest (หามอนสเตอร์, เก็บไม้)
+  - [ ] Cave (มอนสเตอร์แข็งแกร่ง, หาแร่)
+  - [ ] Village (ซื้อขายไอเทม, รับ quest)
+
+### 2.5 🎒 Inventory & Items
+
+- [ ] **ปรับปรุง Inventory System**
+
+  - [ ] Item categories (Consumable, Equipment, Material, Key Item)
+  - [ ] Item stacking
+  - [ ] Use item in/out of battle
+  - [ ] Sell items
+
+- [ ] **สร้าง Item Database** (`src/domain/data/items.ts`)
+  - [ ] Potions (HP/MP recovery)
+  - [ ] Weapons (Sword, Axe, Staff)
+  - [ ] Armor (Helmet, Chest, Boots)
+  - [ ] Materials (Wood, Stone, Iron)
+
+### 2.6 📜 Quest System
+
+- [ ] **สร้าง Quest Store** (`src/presentation/stores/questStore.ts`)
+
+  - [ ] Active quests
+  - [ ] Completed quests
+  - [ ] Quest objectives
+  - [ ] Quest rewards
+
+- [ ] **สร้าง QuestPanel** (`src/presentation/components/game/QuestPanel.tsx`)
+  - [ ] Quest list
+  - [ ] Quest details
+  - [ ] Progress tracking
+
+---
+
 ## 🚀 Development Priority Order
 
-### Sprint 1: Foundation (Current)
+### Sprint 1-5: Foundation ✅ (Completed)
 
-1. ✅ สร้าง TODO.md
-2. ⏳ **สร้าง MainLayout (IE5 Browser style)**
-3. ⏳ สร้าง Theme Provider + Theme Toggle
-4. ⏳ สร้าง Retro UI Components (Button, Window, Input)
+1. ✅ MainLayout (IE5 Browser style)
+2. ✅ Theme Provider + Retro UI Components
+3. ✅ User Store (zustand + localforage)
+4. ✅ Landing Page
+5. ✅ Colyseus Game Server
+6. ✅ 3D Game World (React Three Fiber)
+7. ✅ Farming System
 
-### Sprint 2: User & Landing
+### Sprint 6: Simple Mode RPG (Current) 🎮
 
-5. ⏳ สร้าง User Store (zustand + localforage)
-6. ⏳ สร้าง Landing Page
+8. ✅ Simple Mode UI (SimpleGameView)
+9. ⏳ **Character Status System**
+10. ⏳ **Grid Battle System**
+11. ⏳ Monster Database
 
-### Sprint 3: Game Server
+### Sprint 7: World & Content
 
-7. ⏳ Setup Colyseus Game Room
-8. ⏳ สร้าง Game State Schemas
-9. ⏳ สร้าง Game Client
+12. ⏳ World Map & Locations
+13. ⏳ Item Database
+14. ⏳ Quest System
 
-### Sprint 4: Game World
+### Sprint 8: Polish & Balance
 
-10. ⏳ สร้าง Game Canvas (R3F + Rapier)
-11. ⏳ สร้าง World Components (Ground, Trees)
-12. ⏳ สร้าง Player Component + Controls
+15. ⏳ Game balancing
+16. ⏳ More monsters & items
+17. ⏳ Sound effects for battle
 
-### Sprint 5: Polish
+### Future: 3D Integration
 
-13. ⏳ Game UI Overlay
-14. ⏳ Sound effects (optional)
-15. ⏳ Performance optimization
+18. ⏳ 3D Battle visualization
+19. ⏳ 3D World exploration
+20. ⏳ Performance optimization
 
-### Sprint 6: Map Expansion & World Enhancement 🗺️
+### Sprint 6 (Legacy): Map Expansion 🗺️
 
 > ขยาย Map ให้ใหญ่ขึ้น เพิ่มความหลากหลาย ทำให้น่าสำรวจ
 

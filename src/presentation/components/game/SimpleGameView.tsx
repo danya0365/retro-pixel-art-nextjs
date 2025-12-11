@@ -1,5 +1,6 @@
 "use client";
 
+import type { BattleStage } from "@/src/domain/data/monsters";
 import type { User } from "@/src/domain/types/user";
 import type {
   GardenPlayer,
@@ -7,6 +8,8 @@ import type {
 } from "@/src/presentation/hooks/useGardenRoom";
 import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
 import { useCallback, useState } from "react";
+import { CharacterMiniStatus, CharacterPanel } from "./CharacterPanel";
+import { MonsterHunting } from "./MonsterHunting";
 
 interface SimpleGameViewProps {
   user: User;
@@ -75,12 +78,14 @@ export function SimpleGameView({
   onHarvest,
 }: SimpleGameViewProps) {
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"farm" | "inventory" | "players">(
-    "farm"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "farm" | "inventory" | "players" | "character" | "battle"
+  >("farm");
   const [logs, setLogs] = useState<string[]>([
     "🎮 ยินดีต้อนรับสู่ Retro Pixel Garden!",
   ]);
+  const [highestClearedStage, setHighestClearedStage] = useState(0);
+  const [currentBattle, setCurrentBattle] = useState<BattleStage | null>(null);
 
   const hotbarItems = useHotbarStore((state) => state.items);
   const selectedSlot = useHotbarStore((state) => state.selectedSlot);
@@ -166,21 +171,16 @@ export function SimpleGameView({
           </span>
         </div>
         <div className={`retro-window-content ${timeInfo.bg} p-2`}>
-          <div className="flex justify-between items-center text-xs">
+          <div className="flex justify-between items-center text-xs flex-wrap gap-2">
             <div className="flex items-center gap-4">
               <span>
                 {timeInfo.icon} {timeInfo.period} ({Math.floor(dayTime)}:00)
               </span>
-              <span>👤 {user.nickname}</span>
-              <span>
-                📍 x:{localPlayer?.x.toFixed(0) || 0} z:
-                {localPlayer?.z.toFixed(0) || 0}
-              </span>
+              <span>👥 {players.length}</span>
+              <span>🌱 {plants.length}</span>
             </div>
-            <div className="flex items-center gap-4">
-              <span>👥 ผู้เล่น: {players.length}</span>
-              <span>🌱 พืช: {plants.length}</span>
-            </div>
+            {/* Character Mini Status */}
+            <CharacterMiniStatus />
           </div>
         </div>
       </div>
@@ -221,6 +221,26 @@ export function SimpleGameView({
                   }`}
                 >
                   👥 ผู้เล่น
+                </button>
+                <button
+                  onClick={() => setActiveTab("character")}
+                  className={`px-2 py-0.5 text-xs ${
+                    activeTab === "character"
+                      ? "bg-white"
+                      : "bg-[var(--win98-button-face)]"
+                  }`}
+                >
+                  👤 ตัวละคร
+                </button>
+                <button
+                  onClick={() => setActiveTab("battle")}
+                  className={`px-2 py-0.5 text-xs ${
+                    activeTab === "battle"
+                      ? "bg-white"
+                      : "bg-[var(--win98-button-face)]"
+                  }`}
+                >
+                  ⚔️ ล่ามอนสเตอร์
                 </button>
               </div>
             </div>
@@ -381,6 +401,35 @@ export function SimpleGameView({
                   </div>
                 </div>
               )}
+
+              {activeTab === "character" && (
+                <div>
+                  <CharacterPanel />
+                </div>
+              )}
+
+              {activeTab === "battle" && (
+                <MonsterHunting
+                  highestClearedStage={highestClearedStage}
+                  onStartBattle={(stage) => {
+                    setCurrentBattle(stage);
+                    addLog(`⚔️ เริ่มต่อสู้ ${stage.name}!`);
+                    // TODO: Navigate to battle screen
+                    alert(
+                      `เริ่มต่อสู้ ${stage.name}!\n\nระบบต่อสู้กำลังพัฒนา...\n\nกด OK เพื่อจำลองชนะ`
+                    );
+                    // Simulate win for now
+                    if (stage.id > highestClearedStage) {
+                      setHighestClearedStage(stage.id);
+                    }
+                    addLog(
+                      `🎉 ชนะ! ได้รับ ${Math.floor(
+                        stage.rewards.exp
+                      )} EXP, ${Math.floor(stage.rewards.gold)} Gold`
+                    );
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -449,9 +498,9 @@ export function SimpleGameView({
                 </p>
               ) : (
                 <div className="space-y-1">
-                  {plants.slice(0, 10).map((plant) => (
+                  {plants.slice(0, 10).map((plant, index) => (
                     <div
-                      key={plant.id}
+                      key={`${plant.id}-${index}`}
                       className="flex items-center gap-1 text-xs"
                     >
                       <span>{PLANT_INFO[plant.type]?.icon || "🌱"}</span>
