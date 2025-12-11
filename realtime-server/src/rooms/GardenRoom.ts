@@ -38,9 +38,15 @@ interface JoinOptions {
   avatar?: string;
 }
 
+// Time before empty room is disposed (5 minutes)
+const EMPTY_ROOM_TIMEOUT = 5 * 60 * 1000;
+
 export class GardenRoom extends Room<GardenState> {
   maxClients = 20;
+  autoDispose = false; // ไม่ให้ room หายเมื่อไม่มีผู้เล่น
+
   private updateInterval?: NodeJS.Timeout;
+  private emptyRoomTimeout?: NodeJS.Timeout;
   private plantIdCounter = 0;
   private objectIdCounter = 0;
 
@@ -94,6 +100,13 @@ export class GardenRoom extends Room<GardenState> {
 
   onJoin(client: Client, options: JoinOptions) {
     console.log(`🌱 Player ${client.sessionId} joined garden!`);
+
+    // Clear empty room timeout when player joins
+    if (this.emptyRoomTimeout) {
+      clearTimeout(this.emptyRoomTimeout);
+      this.emptyRoomTimeout = undefined;
+      console.log("⏰ Empty room timeout cleared - player joined");
+    }
 
     // Find spawn point
     const spawnPoint = this.findSpawnPoint();
@@ -158,12 +171,28 @@ export class GardenRoom extends Room<GardenState> {
 
       this.broadcast("player_left", { clientId: client.sessionId });
     }
+
+    // Start empty room timeout if no players left
+    if (this.state.players.length === 0) {
+      console.log(
+        `⏰ Room empty - will dispose in ${
+          EMPTY_ROOM_TIMEOUT / 1000
+        }s if no one joins`
+      );
+      this.emptyRoomTimeout = setTimeout(() => {
+        console.log("🔴 Empty room timeout reached - disposing room");
+        this.disconnect();
+      }, EMPTY_ROOM_TIMEOUT);
+    }
   }
 
   onDispose() {
     console.log("🔴 GardenRoom disposing...");
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
+    }
+    if (this.emptyRoomTimeout) {
+      clearTimeout(this.emptyRoomTimeout);
     }
   }
 

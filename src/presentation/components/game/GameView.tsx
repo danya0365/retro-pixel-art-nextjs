@@ -7,6 +7,7 @@ import { Gamepad2, Loader2, Monitor } from "lucide-react";
 import { useState } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { GameUI } from "./GameUI";
+import { RoomSelector } from "./RoomSelector";
 import { SimpleGameView } from "./SimpleGameView";
 
 export function GameView() {
@@ -41,14 +42,57 @@ export function GameView() {
     );
   }
 
-  // Render game with multiplayer
-  return <GameWithMultiplayer />;
+  // Render game with multiplayer (show room selector first)
+  return <GameLobby />;
+}
+
+/**
+ * Game lobby - shows room selector before connecting
+ */
+function GameLobby() {
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [createNewRoom, setCreateNewRoom] = useState(false);
+  const [hasSelectedRoom, setHasSelectedRoom] = useState(false);
+
+  const handleSelectRoom = (roomId: string | null, createNew: boolean) => {
+    setSelectedRoomId(roomId);
+    setCreateNewRoom(createNew);
+    setHasSelectedRoom(true);
+  };
+
+  // Show room selector if not selected yet
+  if (!hasSelectedRoom) {
+    return (
+      <div className="min-h-full flex items-center justify-center bg-[var(--win98-content-bg)] p-4">
+        <RoomSelector onSelectRoom={handleSelectRoom} />
+      </div>
+    );
+  }
+
+  // Render game with selected room
+  return (
+    <GameWithMultiplayer
+      roomId={selectedRoomId}
+      createNew={createNewRoom}
+      onBack={() => setHasSelectedRoom(false)}
+    />
+  );
+}
+
+interface GameWithMultiplayerProps {
+  roomId: string | null;
+  createNew: boolean;
+  onBack: () => void;
 }
 
 /**
  * Game component with Colyseus multiplayer connection
  */
-function GameWithMultiplayer() {
+function GameWithMultiplayer({
+  roomId,
+  createNew,
+  onBack,
+}: GameWithMultiplayerProps) {
   const user = useUser()!;
   const [isSimpleMode, setIsSimpleMode] = useState(true);
 
@@ -65,7 +109,12 @@ function GameWithMultiplayer() {
     plant,
     water,
     harvest,
-  } = useGardenRoom({ user, autoConnect: true });
+  } = useGardenRoom({
+    user,
+    autoConnect: true,
+    roomId: roomId || undefined,
+    createNew,
+  });
 
   // Show connection error
   if (error) {
@@ -80,9 +129,14 @@ function GameWithMultiplayer() {
             <p className="text-xs text-[var(--win98-button-text)] mb-4">
               {error}
             </p>
-            <button onClick={connect} className="retro-button px-6 py-2">
-              🔄 Retry Connection
-            </button>
+            <div className="flex gap-2 justify-center">
+              <button onClick={onBack} className="retro-button px-4 py-2">
+                ◀️ กลับ
+              </button>
+              <button onClick={connect} className="retro-button px-4 py-2">
+                🔄 ลองใหม่
+              </button>
+            </div>
           </div>
         </div>
       </div>

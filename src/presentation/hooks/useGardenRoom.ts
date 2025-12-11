@@ -50,6 +50,8 @@ export interface GardenState {
 interface UseGardenRoomOptions {
   user: User;
   autoConnect?: boolean;
+  roomId?: string; // Optional: join specific room by ID
+  createNew?: boolean; // Optional: force create new room
 }
 
 interface UseGardenRoomReturn {
@@ -89,9 +91,12 @@ interface UseGardenRoomReturn {
 export function useGardenRoom({
   user,
   autoConnect = true,
+  roomId,
+  createNew = false,
 }: UseGardenRoomOptions): UseGardenRoomReturn {
   const roomRef = useRef<Room | null>(null);
   const inputSequenceRef = useRef(0);
+  const isConnectingRef = useRef(false); // Ref to prevent double connect from Strict Mode
 
   // Connection state
   const [isConnected, setIsConnected] = useState(false);
@@ -109,16 +114,30 @@ export function useGardenRoom({
    * Connect to garden room
    */
   const connect = useCallback(async () => {
-    if (isConnected || isConnecting) return;
+    // Use ref to prevent double connect from React Strict Mode
+    if (isConnected || isConnecting || isConnectingRef.current) return;
 
+    isConnectingRef.current = true;
     setIsConnecting(true);
     setError(null);
 
     try {
-      const room = await gameClient.joinOrCreateRoom("garden_room", {
+      let room;
+      const options = {
         nickname: user.nickname,
         avatar: user.avatar,
-      });
+      };
+
+      if (roomId) {
+        // Join specific room by ID
+        room = await gameClient.joinRoomById(roomId, options);
+      } else if (createNew) {
+        // Create new room
+        room = await gameClient.createRoom("garden_room", options);
+      } else {
+        // Join or create (default behavior)
+        room = await gameClient.joinOrCreateRoom("garden_room", options);
+      }
 
       roomRef.current = room;
 
@@ -222,8 +241,9 @@ export function useGardenRoom({
       setError(err instanceof Error ? err.message : "Connection failed");
     } finally {
       setIsConnecting(false);
+      isConnectingRef.current = false;
     }
-  }, [user, isConnected, isConnecting]);
+  }, [user, isConnected, isConnecting, roomId, createNew]);
 
   /**
    * Disconnect from room
