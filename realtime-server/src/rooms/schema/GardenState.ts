@@ -24,6 +24,24 @@ export class GardenPlayer extends Schema {
   @type("string") currentAction: string = "idle"; // idle, walk, plant, water, harvest
   @type("number") lastProcessedInput: number = 0;
   @type("number") timestamp: number = 0;
+
+  // Character Stats (synced from client)
+  @type("string") characterClass: string = "Farmer";
+  @type("number") level: number = 1;
+  @type("number") exp: number = 0;
+  @type("number") expToNextLevel: number = 100;
+  @type("number") hp: number = 120;
+  @type("number") maxHp: number = 120;
+  @type("number") mp: number = 30;
+  @type("number") maxMp: number = 30;
+  @type("number") atk: number = 85;
+  @type("number") def: number = 75;
+  @type("number") agi: number = 90;
+  @type("number") wis: number = 60;
+  @type("number") gold: number = 100;
+  @type("number") mov: number = 2;
+  @type("number") rng: number = 1;
+  @type("number") highestClearedStage: number = 0;
 }
 
 /**

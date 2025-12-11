@@ -16,20 +16,24 @@ export function PlayerProfileModal({
 }: PlayerProfileModalProps) {
   if (!isOpen) return null;
 
-  // Mock player stats (ในอนาคตสามารถดึงจาก server ได้)
-  const mockStats = {
-    level: Math.floor(Math.random() * 20) + 1,
-    exp: Math.floor(Math.random() * 1000),
-    expToNextLevel: 1000,
-    hp: Math.floor(Math.random() * 50) + 80,
-    maxHp: 120,
-    mp: Math.floor(Math.random() * 20) + 20,
-    maxMp: 30,
-    atk: Math.floor(Math.random() * 10) + 15,
-    def: Math.floor(Math.random() * 8) + 10,
-    gold: Math.floor(Math.random() * 500) + 100,
-    plantsGrown: Math.floor(Math.random() * 50),
-    monstersDefeated: Math.floor(Math.random() * 30),
+  // Use real stats from player (synced from server)
+  const stats = {
+    characterClass: player.characterClass || "Farmer",
+    level: player.level || 1,
+    exp: player.exp || 0,
+    expToNextLevel: player.expToNextLevel || 100,
+    hp: player.hp || 120,
+    maxHp: player.maxHp || 120,
+    mp: player.mp || 30,
+    maxMp: player.maxMp || 30,
+    atk: player.atk || 85,
+    def: player.def || 75,
+    agi: player.agi || 90,
+    wis: player.wis || 60,
+    gold: player.gold || 100,
+    mov: player.mov || 2,
+    rng: player.rng || 1,
+    highestClearedStage: player.highestClearedStage || 0,
   };
 
   return (
@@ -64,7 +68,7 @@ export function PlayerProfileModal({
               <div>
                 <h2 className="text-lg font-bold">{player.nickname}</h2>
                 <p className="text-xs opacity-80">
-                  Lv.{mockStats.level} การ์ดเนอร์
+                  Lv.{stats.level} การ์ดเนอร์
                 </p>
                 <p className="text-xs opacity-60 mt-1">
                   📍 {player.x.toFixed(0)}, {player.z.toFixed(0)}
@@ -82,14 +86,14 @@ export function PlayerProfileModal({
                 <div className="flex justify-between text-xs mb-1">
                   <span className="font-bold text-red-600">❤️ HP</span>
                   <span>
-                    {mockStats.hp}/{mockStats.maxHp}
+                    {stats.hp}/{stats.maxHp}
                   </span>
                 </div>
                 <div className="w-full h-3 bg-gray-300 border border-gray-400 rounded-sm overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-red-500 to-red-400"
                     style={{
-                      width: `${(mockStats.hp / mockStats.maxHp) * 100}%`,
+                      width: `${(stats.hp / stats.maxHp) * 100}%`,
                     }}
                   />
                 </div>
@@ -98,14 +102,14 @@ export function PlayerProfileModal({
                 <div className="flex justify-between text-xs mb-1">
                   <span className="font-bold text-blue-600">💧 MP</span>
                   <span>
-                    {mockStats.mp}/{mockStats.maxMp}
+                    {stats.mp}/{stats.maxMp}
                   </span>
                 </div>
                 <div className="w-full h-3 bg-gray-300 border border-gray-400 rounded-sm overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
                     style={{
-                      width: `${(mockStats.mp / mockStats.maxMp) * 100}%`,
+                      width: `${(stats.mp / stats.maxMp) * 100}%`,
                     }}
                   />
                 </div>
@@ -114,16 +118,14 @@ export function PlayerProfileModal({
                 <div className="flex justify-between text-xs mb-1">
                   <span className="font-bold text-green-600">⭐ EXP</span>
                   <span>
-                    {mockStats.exp}/{mockStats.expToNextLevel}
+                    {stats.exp}/{stats.expToNextLevel}
                   </span>
                 </div>
                 <div className="w-full h-3 bg-gray-300 border border-gray-400 rounded-sm overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-green-500 to-green-400"
                     style={{
-                      width: `${
-                        (mockStats.exp / mockStats.expToNextLevel) * 100
-                      }%`,
+                      width: `${(stats.exp / stats.expToNextLevel) * 100}%`,
                     }}
                   />
                 </div>
@@ -139,26 +141,38 @@ export function PlayerProfileModal({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
                     <span>⚔️ ATK</span>
-                    <span className="font-bold text-red-600">
-                      {mockStats.atk}
-                    </span>
+                    <span className="font-bold text-red-600">{stats.atk}</span>
                   </div>
                   <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
                     <span>🛡️ DEF</span>
-                    <span className="font-bold text-blue-600">
-                      {mockStats.def}
-                    </span>
+                    <span className="font-bold text-blue-600">{stats.def}</span>
                   </div>
                   <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
                     <span>💰 Gold</span>
                     <span className="font-bold text-yellow-600">
-                      {mockStats.gold}
+                      {stats.gold}
                     </span>
                   </div>
                   <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
-                    <span>🌱 ปลูก</span>
+                    <span>⚡ AGI</span>
                     <span className="font-bold text-green-600">
-                      {mockStats.plantsGrown}
+                      {stats.agi}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
+                    <span>✨ WIS</span>
+                    <span className="font-bold text-purple-600">
+                      {stats.wis}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
+                    <span>👟 MOV</span>
+                    <span className="font-bold text-cyan-600">{stats.mov}</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-[var(--win98-button-face)] p-1.5 border border-[var(--win98-button-shadow)]">
+                    <span>🎯 RNG</span>
+                    <span className="font-bold text-orange-600">
+                      {stats.rng}
                     </span>
                   </div>
                 </div>
@@ -174,7 +188,7 @@ export function PlayerProfileModal({
               </div>
               <div className="retro-window-content p-2">
                 <div className="flex flex-wrap gap-1">
-                  {mockStats.level >= 5 && (
+                  {stats.level >= 5 && (
                     <span
                       className="px-2 py-0.5 bg-yellow-100 border border-yellow-400 rounded text-xs"
                       title="ผู้เริ่มต้น"
@@ -182,15 +196,15 @@ export function PlayerProfileModal({
                       🌟 ผู้เริ่มต้น
                     </span>
                   )}
-                  {mockStats.plantsGrown >= 10 && (
+                  {stats.highestClearedStage >= 3 && (
                     <span
                       className="px-2 py-0.5 bg-green-100 border border-green-400 rounded text-xs"
-                      title="ชาวสวน"
+                      title="นักสำรวจ"
                     >
-                      🌻 ชาวสวน
+                      🗺️ นักสำรวจ
                     </span>
                   )}
-                  {mockStats.monstersDefeated >= 10 && (
+                  {stats.highestClearedStage >= 10 && (
                     <span
                       className="px-2 py-0.5 bg-red-100 border border-red-400 rounded text-xs"
                       title="นักล่า"
@@ -198,7 +212,7 @@ export function PlayerProfileModal({
                       ⚔️ นักล่า
                     </span>
                   )}
-                  {mockStats.gold >= 300 && (
+                  {stats.gold >= 300 && (
                     <span
                       className="px-2 py-0.5 bg-amber-100 border border-amber-400 rounded text-xs"
                       title="เศรษฐี"
@@ -206,10 +220,9 @@ export function PlayerProfileModal({
                       💎 เศรษฐี
                     </span>
                   )}
-                  {mockStats.level < 5 &&
-                    mockStats.plantsGrown < 10 &&
-                    mockStats.monstersDefeated < 10 &&
-                    mockStats.gold < 300 && (
+                  {stats.level < 5 &&
+                    stats.highestClearedStage < 3 &&
+                    stats.gold < 300 && (
                       <span className="text-xs text-gray-500">
                         ยังไม่มีความสำเร็จ
                       </span>

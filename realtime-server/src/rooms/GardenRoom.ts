@@ -36,6 +36,25 @@ interface PlaceObjectInput {
 interface JoinOptions {
   nickname?: string;
   avatar?: string;
+  // Character stats from client
+  characterClass?: string;
+  stats?: {
+    level?: number;
+    exp?: number;
+    expToNextLevel?: number;
+    hp?: number;
+    maxHp?: number;
+    mp?: number;
+    maxMp?: number;
+    atk?: number;
+    def?: number;
+    agi?: number;
+    wis?: number;
+    gold?: number;
+    mov?: number;
+    rng?: number;
+    highestClearedStage?: number;
+  };
 }
 
 // Time before empty room is disposed (5 minutes)
@@ -89,6 +108,14 @@ export class GardenRoom extends Room<GardenState> {
       this.handleRemoveObject(client, message.objectId);
     });
 
+    // Handle stats update from client
+    this.onMessage(
+      "update_stats",
+      (client, message: { stats: Partial<JoinOptions["stats"]> }) => {
+        this.handleUpdateStats(client, message.stats);
+      }
+    );
+
     // Start game loop
     this.startGameLoop();
 
@@ -111,9 +138,9 @@ export class GardenRoom extends Room<GardenState> {
     // Find spawn point
     const spawnPoint = this.findSpawnPoint();
 
-    // Create player
+    // Create player with unique ID using sessionId
     const player = new GardenPlayer();
-    player.id = `player_${this.state.players.length}`;
+    player.id = client.sessionId; // Use sessionId as unique player ID
     player.clientId = client.sessionId;
     player.nickname =
       options.nickname || `Gardener${this.state.players.length + 1}`;
@@ -124,6 +151,26 @@ export class GardenRoom extends Room<GardenState> {
     player.direction = "down";
     player.currentAction = "idle";
     player.timestamp = Date.now();
+
+    // Apply character stats from client
+    player.characterClass = options.characterClass || "Farmer";
+    if (options.stats) {
+      player.level = options.stats.level ?? 1;
+      player.exp = options.stats.exp ?? 0;
+      player.expToNextLevel = options.stats.expToNextLevel ?? 100;
+      player.hp = options.stats.hp ?? 120;
+      player.maxHp = options.stats.maxHp ?? 120;
+      player.mp = options.stats.mp ?? 30;
+      player.maxMp = options.stats.maxMp ?? 30;
+      player.atk = options.stats.atk ?? 85;
+      player.def = options.stats.def ?? 75;
+      player.agi = options.stats.agi ?? 90;
+      player.wis = options.stats.wis ?? 60;
+      player.gold = options.stats.gold ?? 100;
+      player.mov = options.stats.mov ?? 2;
+      player.rng = options.stats.rng ?? 1;
+      player.highestClearedStage = options.stats.highestClearedStage ?? 0;
+    }
 
     this.state.players.push(player);
 
@@ -478,5 +525,41 @@ export class GardenRoom extends Room<GardenState> {
    */
   private clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
+  }
+
+  /**
+   * Handle stats update from client
+   */
+  private handleUpdateStats(
+    client: Client,
+    stats: Partial<JoinOptions["stats"]> | undefined
+  ) {
+    if (!stats) return;
+
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Update player stats
+    if (stats.level !== undefined) player.level = stats.level;
+    if (stats.exp !== undefined) player.exp = stats.exp;
+    if (stats.expToNextLevel !== undefined)
+      player.expToNextLevel = stats.expToNextLevel;
+    if (stats.hp !== undefined) player.hp = stats.hp;
+    if (stats.maxHp !== undefined) player.maxHp = stats.maxHp;
+    if (stats.mp !== undefined) player.mp = stats.mp;
+    if (stats.maxMp !== undefined) player.maxMp = stats.maxMp;
+    if (stats.atk !== undefined) player.atk = stats.atk;
+    if (stats.def !== undefined) player.def = stats.def;
+    if (stats.agi !== undefined) player.agi = stats.agi;
+    if (stats.wis !== undefined) player.wis = stats.wis;
+    if (stats.gold !== undefined) player.gold = stats.gold;
+    if (stats.mov !== undefined) player.mov = stats.mov;
+    if (stats.rng !== undefined) player.rng = stats.rng;
+    if (stats.highestClearedStage !== undefined)
+      player.highestClearedStage = stats.highestClearedStage;
+
+    console.log(`📊 Stats updated for ${player.nickname}: Lv.${player.level}`);
   }
 }

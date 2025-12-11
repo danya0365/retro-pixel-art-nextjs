@@ -2,6 +2,7 @@
 
 import type { User } from "@/src/domain/types/user";
 import { gameClient } from "@/src/infrastructure/colyseus/GameClient";
+import { useCharacterStore } from "@/src/presentation/stores/characterStore";
 import { Room } from "colyseus.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -17,6 +18,23 @@ export interface GardenPlayer {
   direction: string;
   isMoving: boolean;
   currentAction: string;
+  // Character stats
+  characterClass: string;
+  level: number;
+  exp: number;
+  expToNextLevel: number;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+  atk: number;
+  def: number;
+  agi: number;
+  wis: number;
+  gold: number;
+  mov: number;
+  rng: number;
+  highestClearedStage: number;
 }
 
 export interface PlantedItem {
@@ -97,6 +115,7 @@ export function useGardenRoom({
   const roomRef = useRef<Room | null>(null);
   const inputSequenceRef = useRef(0);
   const isConnectingRef = useRef(false); // Ref to prevent double connect from Strict Mode
+  const isMountedRef = useRef(true); // Track if component is truly mounted
 
   // Connection state
   const [isConnected, setIsConnected] = useState(false);
@@ -123,9 +142,29 @@ export function useGardenRoom({
 
     try {
       let room;
+      // Get character stats from store
+      const characterState = useCharacterStore.getState().character;
       const options = {
         nickname: user.nickname,
         avatar: user.avatar,
+        characterClass: characterState.class,
+        stats: {
+          level: characterState.totalStats.level,
+          exp: characterState.totalStats.exp,
+          expToNextLevel: characterState.totalStats.expToNextLevel,
+          hp: characterState.totalStats.hp,
+          maxHp: characterState.totalStats.maxHp,
+          mp: characterState.totalStats.mp,
+          maxMp: characterState.totalStats.maxMp,
+          atk: characterState.totalStats.atk,
+          def: characterState.totalStats.def,
+          agi: characterState.totalStats.agi,
+          wis: characterState.totalStats.wis,
+          gold: characterState.gold,
+          mov: characterState.totalStats.mov,
+          rng: characterState.totalStats.rng,
+          highestClearedStage: 0,
+        },
       };
 
       if (roomId) {
@@ -158,6 +197,23 @@ export function useGardenRoom({
               direction: p.direction,
               isMoving: p.isMoving,
               currentAction: p.currentAction,
+              // Character stats
+              characterClass: p.characterClass || "Farmer",
+              level: p.level || 1,
+              exp: p.exp || 0,
+              expToNextLevel: p.expToNextLevel || 100,
+              hp: p.hp || 120,
+              maxHp: p.maxHp || 120,
+              mp: p.mp || 30,
+              maxMp: p.maxMp || 30,
+              atk: p.atk || 85,
+              def: p.def || 75,
+              agi: p.agi || 90,
+              wis: p.wis || 60,
+              gold: p.gold || 100,
+              mov: p.mov || 2,
+              rng: p.rng || 1,
+              highestClearedStage: p.highestClearedStage || 0,
             });
           });
           setPlayers(playerList);
@@ -319,17 +375,26 @@ export function useGardenRoom({
     roomRef.current.send("remove_object", { objectId });
   }, []);
 
-  // Auto-connect on mount
+  // Auto-connect on mount (only once)
   useEffect(() => {
     if (autoConnect && user) {
       connect();
     }
-
-    return () => {
-      disconnect();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoConnect, user.id]);
+  }, []); // Empty deps - connect only once on mount
+
+  // Disconnect on unmount (separate effect to avoid reconnection issues)
+  useEffect(() => {
+    return () => {
+      // Only disconnect when component truly unmounts (e.g., leaving the game page)
+      // Don't disconnect on every re-render
+      if (roomRef.current) {
+        console.log("🔌 Component unmounting - disconnecting from room");
+        roomRef.current.leave();
+        roomRef.current = null;
+      }
+    };
+  }, []); // Empty deps - cleanup only on unmount
 
   return {
     isConnected,
