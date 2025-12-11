@@ -3,9 +3,11 @@
 import { CreateUserModal } from "@/src/presentation/components/user/CreateUserModal";
 import { useGardenRoom } from "@/src/presentation/hooks/useGardenRoom";
 import { useIsHydrated, useUser } from "@/src/presentation/stores/userStore";
-import { Loader2 } from "lucide-react";
+import { Gamepad2, Loader2, Monitor } from "lucide-react";
+import { useState } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { GameUI } from "./GameUI";
+import { SimpleGameView } from "./SimpleGameView";
 
 export function GameView() {
   const user = useUser();
@@ -48,6 +50,7 @@ export function GameView() {
  */
 function GameWithMultiplayer() {
   const user = useUser()!;
+  const [isSimpleMode, setIsSimpleMode] = useState(false);
 
   const {
     isConnected,
@@ -88,26 +91,63 @@ function GameWithMultiplayer() {
 
   return (
     <div className="relative w-full h-full min-h-[calc(100vh-140px)] bg-[var(--win98-content-bg)]">
-      {/* 3D Game Canvas */}
-      <GameCanvas
-        user={user}
-        players={players}
-        plants={plants}
-        localPlayerId={localPlayerId}
-        dayTime={dayTime}
-        onPlayerInput={sendInput}
-        onPlant={plant}
-        onWater={water}
-        onHarvest={harvest}
-      />
+      {/* Mode Toggle Button */}
+      <div className="absolute top-2 right-2 z-50">
+        <button
+          onClick={() => setIsSimpleMode(!isSimpleMode)}
+          className="retro-button flex items-center gap-2 px-3 py-1.5 text-xs"
+          title={isSimpleMode ? "Switch to 3D Mode" : "Switch to Simple Mode"}
+        >
+          {isSimpleMode ? (
+            <>
+              <Gamepad2 className="w-4 h-4" />
+              <span>3D Mode</span>
+            </>
+          ) : (
+            <>
+              <Monitor className="w-4 h-4" />
+              <span>Simple Mode</span>
+            </>
+          )}
+        </button>
+      </div>
 
-      {/* Game UI Overlay */}
-      <GameUI
-        user={user}
-        isConnected={isConnected}
-        playerCount={players.length}
-        dayTime={dayTime}
-      />
+      {isSimpleMode ? (
+        /* Simple Text-Based Mode */
+        <SimpleGameView
+          user={user}
+          players={players}
+          plants={plants}
+          localPlayerId={localPlayerId}
+          dayTime={dayTime}
+          onPlant={plant}
+          onWater={water}
+          onHarvest={harvest}
+        />
+      ) : (
+        /* 3D Game Canvas */
+        <>
+          <GameCanvas
+            user={user}
+            players={players}
+            plants={plants}
+            localPlayerId={localPlayerId}
+            dayTime={dayTime}
+            onPlayerInput={sendInput}
+            onPlant={plant}
+            onWater={water}
+            onHarvest={harvest}
+          />
+
+          {/* Game UI Overlay */}
+          <GameUI
+            user={user}
+            isConnected={isConnected}
+            playerCount={players.length}
+            dayTime={dayTime}
+          />
+        </>
+      )}
 
       {/* Connecting overlay */}
       {isConnecting && (
