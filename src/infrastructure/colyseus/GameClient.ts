@@ -136,6 +136,128 @@ class GameClientManager {
     }
     this.client = null;
   }
+
+  // ============================================
+  // Battle & Character Sync Methods
+  // ============================================
+
+  /**
+   * Sync full character data to server
+   */
+  syncCharacter(data: {
+    username: string;
+    characterClass: string;
+    avatar: string;
+    stats: {
+      level: number;
+      exp: number;
+      expToNextLevel: number;
+      hp: number;
+      maxHp: number;
+      mp: number;
+      maxMp: number;
+      atk: number;
+      def: number;
+      agi: number;
+      wis: number;
+      mov: number;
+      rng: number;
+      gold: number;
+      highestClearedStage: number;
+    };
+  }): void {
+    this.sendMessage("sync_character", data);
+  }
+
+  /**
+   * Report battle victory to server
+   */
+  reportBattleVictory(data: {
+    stageId: number;
+    stageName: string;
+    rewards: {
+      exp: number;
+      gold: number;
+    };
+    leveledUp: boolean;
+    newLevel?: number;
+  }): void {
+    this.sendMessage("battle_victory", data);
+  }
+
+  /**
+   * Update specific stats
+   */
+  updateStats(
+    stats: Partial<{
+      level: number;
+      exp: number;
+      expToNextLevel: number;
+      hp: number;
+      maxHp: number;
+      mp: number;
+      maxMp: number;
+      atk: number;
+      def: number;
+      agi: number;
+      wis: number;
+      mov: number;
+      rng: number;
+      gold: number;
+      highestClearedStage: number;
+    }>
+  ): void {
+    this.sendMessage("update_stats", { stats });
+  }
+
+  /**
+   * Listen for battle result sync confirmation
+   */
+  onBattleResultSynced(
+    callback: (data: {
+      success: boolean;
+      stats: {
+        level: number;
+        exp: number;
+        gold: number;
+        highestClearedStage: number;
+      };
+    }) => void
+  ): () => void {
+    if (!this.currentRoom) {
+      console.warn("Not connected to any room");
+      return () => {};
+    }
+
+    this.currentRoom.onMessage("battle_result_synced", callback);
+    return () => {
+      // Cleanup would go here if needed
+    };
+  }
+
+  /**
+   * Listen for other players' battle results
+   */
+  onPlayerBattleResult(
+    callback: (data: {
+      playerId: string;
+      username: string;
+      stageName: string;
+      rewards: { exp: number; gold: number };
+      leveledUp: boolean;
+      newLevel?: number;
+    }) => void
+  ): () => void {
+    if (!this.currentRoom) {
+      console.warn("Not connected to any room");
+      return () => {};
+    }
+
+    this.currentRoom.onMessage("player_battle_result", callback);
+    return () => {
+      // Cleanup would go here if needed
+    };
+  }
 }
 
 // Export singleton instance

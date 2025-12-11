@@ -1,5 +1,5 @@
-import { Room, Client } from "@colyseus/core";
-import { GameState, Player, NPC } from "./schema/GameState";
+import { Client, Room } from "@colyseus/core";
+import { GameState, NPC, Player } from "./schema/GameState";
 
 interface GameRoomOptions {
   roomName?: string;
@@ -8,6 +8,45 @@ interface GameRoomOptions {
   username?: string;
   mode?: string;
   mapName?: string;
+}
+
+// Message interfaces for battle sync
+interface SyncCharacterMessage {
+  username: string;
+  characterClass: string;
+  avatar: string;
+  stats: {
+    level: number;
+    exp: number;
+    expToNextLevel: number;
+    hp: number;
+    maxHp: number;
+    mp: number;
+    maxMp: number;
+    atk: number;
+    def: number;
+    agi: number;
+    wis: number;
+    mov: number;
+    rng: number;
+    gold: number;
+    highestClearedStage: number;
+  };
+}
+
+interface BattleVictoryMessage {
+  stageId: number;
+  stageName: string;
+  rewards: {
+    exp: number;
+    gold: number;
+  };
+  leveledUp: boolean;
+  newLevel?: number;
+}
+
+interface UpdateStatsMessage {
+  stats: Partial<SyncCharacterMessage["stats"]>;
 }
 
 export class GameRoom extends Room<GameState> {
@@ -20,14 +59,8 @@ export class GameRoom extends Room<GameState> {
   onCreate(options: GameRoomOptions) {
     console.log("🎮 GameRoom created!", options);
 
-    const {
-      roomName,
-      maxClients,
-      isPrivate,
-      username,
-      mode,
-      mapName,
-    } = options ?? {};
+    const { roomName, maxClients, isPrivate, username, mode, mapName } =
+      options ?? {};
 
     if (typeof maxClients === "number" && Number.isFinite(maxClients)) {
       const clampedMax = Math.max(1, Math.min(100, Math.floor(maxClients)));
@@ -74,17 +107,42 @@ export class GameRoom extends Room<GameState> {
         { except: client }
       );
     });
-    
+
     this.onMessage("get_available_characters", (client) => {
       const allCharacters = ["warrior", "mage", "archer", "rogue"];
       const availableCharacters = allCharacters.filter(
         (char) => !this.usedCharacters.has(char)
       );
-      
+
       client.send("available_characters", {
         available: availableCharacters,
         used: Array.from(this.usedCharacters),
       });
+    });
+
+    // ============================================
+    // Battle & Character Sync Handlers
+    // ============================================
+
+    // Sync full character data
+    this.onMessage(
+      "sync_character",
+      (client, message: SyncCharacterMessage) => {
+        this.handleSyncCharacter(client, message);
+      }
+    );
+
+    // Battle victory - update stats
+    this.onMessage(
+      "battle_victory",
+      (client, message: BattleVictoryMessage) => {
+        this.handleBattleVictory(client, message);
+      }
+    );
+
+    // Update player stats (general)
+    this.onMessage("update_stats", (client, message: UpdateStatsMessage) => {
+      this.handleUpdateStats(client, message);
     });
 
     // Spawn initial NPCs
@@ -102,10 +160,12 @@ export class GameRoom extends Room<GameState> {
     console.log(`👤 Player ${client.sessionId} joined!`);
 
     const characterType = options.characterType || "warrior";
-    
+
     // Check if character is already in use
     if (this.usedCharacters.has(characterType)) {
-      console.warn(`⚠️  Character ${characterType} already in use, assigning to ${client.sessionId} anyway`);
+      console.warn(
+        `⚠️  Character ${characterType} already in use, assigning to ${client.sessionId} anyway`
+      );
     }
 
     // Create new player
@@ -113,7 +173,7 @@ export class GameRoom extends Room<GameState> {
     player.id = client.sessionId;
     player.username = options.username || `Player${this.clients.length}`;
     player.characterType = characterType;
-    
+
     // Random spawn position (-5 to 5)
     player.x = Math.random() * 10 - 5;
     player.y = 0;
@@ -137,7 +197,11 @@ export class GameRoom extends Room<GameState> {
       { except: client }
     );
 
-    console.log(`✅ Player "${player.username}" spawned at (${player.x.toFixed(2)}, ${player.z.toFixed(2)})`);
+    console.log(
+      `✅ Player "${player.username}" spawned at (${player.x.toFixed(
+        2
+      )}, ${player.z.toFixed(2)})`
+    );
   }
 
   onLeave(client: Client, consented: boolean) {
@@ -148,7 +212,7 @@ export class GameRoom extends Room<GameState> {
     if (player) {
       // Free up the character
       this.usedCharacters.delete(player.characterType);
-      
+
       // Broadcast leave message
       this.broadcast("player_left", {
         playerId: client.sessionId,
@@ -157,7 +221,9 @@ export class GameRoom extends Room<GameState> {
 
       // Remove player from state
       this.state.players.delete(client.sessionId);
-      console.log(`🗑️  Removed player "${player.username}" (${player.characterType}) from game`);
+      console.log(
+        `🗑️  Removed player "${player.username}" (${player.characterType}) from game`
+      );
     }
   }
 
@@ -280,6 +346,145 @@ export class GameRoom extends Room<GameState> {
       default:
         // Do nothing
         break;
+    }
+  }
+
+  // ============================================
+  // Battle & Character Sync Handlers
+  // ============================================
+
+  /**
+   * Handle full character sync
+   */
+  private handleSyncCharacter(client: Client, message: SyncCharacterMessage) {
+    const player = this.state.players.get(client.sessionId);
+
+    if (player && message) {
+      // Update character info
+      player.username = message.username || player.username;
+      player.characterClass = message.characterClass || player.characterClass;
+      player.avatar = message.avatar || player.avatar;
+
+      // Update stats
+      if (message.stats) {
+        const stats = player.stats;
+        stats.level = message.stats.level ?? stats.level;
+        stats.exp = message.stats.exp ?? stats.exp;
+        stats.expToNextLevel =
+          message.stats.expToNextLevel ?? stats.expToNextLevel;
+        stats.hp = message.stats.hp ?? stats.hp;
+        stats.maxHp = message.stats.maxHp ?? stats.maxHp;
+        stats.mp = message.stats.mp ?? stats.mp;
+        stats.maxMp = message.stats.maxMp ?? stats.maxMp;
+        stats.atk = message.stats.atk ?? stats.atk;
+        stats.def = message.stats.def ?? stats.def;
+        stats.agi = message.stats.agi ?? stats.agi;
+        stats.wis = message.stats.wis ?? stats.wis;
+        stats.mov = message.stats.mov ?? stats.mov;
+        stats.rng = message.stats.rng ?? stats.rng;
+        stats.gold = message.stats.gold ?? stats.gold;
+        stats.highestClearedStage =
+          message.stats.highestClearedStage ?? stats.highestClearedStage;
+      }
+
+      console.log(
+        `📊 Character synced for ${player.username}: Lv.${player.stats.level}, ${player.stats.gold}G`
+      );
+
+      // Send confirmation back to client
+      client.send("character_synced", {
+        success: true,
+        stats: {
+          level: player.stats.level,
+          exp: player.stats.exp,
+          gold: player.stats.gold,
+          highestClearedStage: player.stats.highestClearedStage,
+        },
+      });
+    }
+  }
+
+  /**
+   * Handle battle victory
+   */
+  private handleBattleVictory(client: Client, message: BattleVictoryMessage) {
+    const player = this.state.players.get(client.sessionId);
+
+    if (player && message) {
+      const stats = player.stats;
+      const { stageId, stageName, rewards, leveledUp, newLevel } = message;
+
+      // Update stats with rewards
+      stats.exp += rewards.exp;
+      stats.gold += rewards.gold;
+
+      // Update level if leveled up
+      if (leveledUp && newLevel) {
+        stats.level = newLevel;
+      }
+
+      // Update highest cleared stage
+      if (stageId > stats.highestClearedStage) {
+        stats.highestClearedStage = stageId;
+      }
+
+      console.log(
+        `⚔️ Battle victory for ${player.username}!`,
+        `Stage: ${stageName}`,
+        `+${rewards.exp} EXP, +${rewards.gold} Gold`,
+        leveledUp ? `Level Up! Lv.${newLevel}` : ""
+      );
+
+      // Broadcast battle result to all players
+      this.broadcast("player_battle_result", {
+        playerId: client.sessionId,
+        username: player.username,
+        stageName,
+        rewards,
+        leveledUp,
+        newLevel: leveledUp ? newLevel : undefined,
+      });
+
+      // Send confirmation back to client
+      client.send("battle_result_synced", {
+        success: true,
+        stats: {
+          level: stats.level,
+          exp: stats.exp,
+          gold: stats.gold,
+          highestClearedStage: stats.highestClearedStage,
+        },
+      });
+    }
+  }
+
+  /**
+   * Handle stats update (general)
+   */
+  private handleUpdateStats(client: Client, message: UpdateStatsMessage) {
+    const player = this.state.players.get(client.sessionId);
+
+    if (player && message.stats) {
+      const stats = player.stats;
+
+      // Update only the provided stats
+      Object.entries(message.stats).forEach(([key, value]) => {
+        if (value !== undefined && key in stats) {
+          (stats as unknown as Record<string, number>)[key] = value;
+        }
+      });
+
+      console.log(`📊 Stats updated for ${player.username}`);
+
+      client.send("stats_updated", {
+        success: true,
+        stats: {
+          level: stats.level,
+          exp: stats.exp,
+          gold: stats.gold,
+          highestClearedStage: stats.highestClearedStage,
+        },
+      });
     }
   }
 }

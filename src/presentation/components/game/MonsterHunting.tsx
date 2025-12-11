@@ -14,6 +14,149 @@ interface MonsterHuntingProps {
   highestClearedStage: number;
 }
 
+// ============================================
+// Stage Confirm Modal - Win98 Style Popup
+// ============================================
+interface StageConfirmModalProps {
+  stage: BattleStage;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function StageConfirmModal({
+  stage,
+  onConfirm,
+  onCancel,
+}: StageConfirmModalProps) {
+  const monsters = stage.monsters.map((sm) => {
+    const monster = MONSTERS[sm.monsterId];
+    return {
+      ...monster,
+      level: sm.level,
+    };
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="retro-window w-full max-w-md mx-4 shadow-2xl">
+        {/* Title Bar */}
+        <div className="retro-window-titlebar flex justify-between items-center">
+          <span className="retro-window-title">⚔️ {stage.name}</span>
+          <button
+            onClick={onCancel}
+            className="w-5 h-5 flex items-center justify-center bg-gray-200 border border-gray-400 text-xs font-bold hover:bg-red-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="retro-window-content p-4">
+          {/* Stage Info */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">📍</span>
+              <div>
+                <div className="font-bold">ด่านที่ {stage.id}</div>
+                <div className="text-xs text-gray-600">{stage.description}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Monster List */}
+          <div className="mb-4 p-2 bg-gray-100 border-2 border-gray-300">
+            <div className="text-xs font-bold mb-2 flex items-center gap-1">
+              👹 มอนสเตอร์ในด่าน ({monsters.length} ตัว)
+            </div>
+            <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+              {monsters.map((monster, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-2 bg-white border border-gray-300 rounded"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{monster.icon}</span>
+                    <div>
+                      <div className="font-bold text-sm">{monster.name}</div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <span
+                          className={`px-1 rounded ${getRankColor(
+                            monster.rank
+                          )}`}
+                        >
+                          {monster.rank}
+                        </span>
+                        <span>Lv.{monster.level}</span>
+                        <span>{getElementIcon(monster.element)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right text-xs">
+                    <div>
+                      HP:{" "}
+                      {Math.floor(
+                        monster.baseStats.hp * (1 + (monster.level - 1) * 0.1)
+                      )}
+                    </div>
+                    <div>
+                      ATK:{" "}
+                      {Math.floor(
+                        monster.baseStats.atk * (1 + (monster.level - 1) * 0.1)
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Rewards */}
+          <div className="mb-4 p-2 bg-yellow-50 border-2 border-yellow-400">
+            <div className="text-xs font-bold mb-2">🎁 รางวัลที่จะได้รับ</div>
+            <div className="flex gap-6 justify-center">
+              <div className="text-center">
+                <div className="text-xl">⭐</div>
+                <div className="text-sm font-bold text-green-600">
+                  +{Math.floor(stage.rewards.exp)} EXP
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl">💰</div>
+                <div className="text-sm font-bold text-yellow-600">
+                  +{Math.floor(stage.rewards.gold)} Gold
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={onCancel}
+              className="flex-1 retro-button py-2 bg-gray-200 text-gray-700"
+            >
+              ❌ ยกเลิก
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={!stage.unlocked}
+              className="flex-1 retro-button py-2 bg-red-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ⚔️ เริ่มต่อสู้!
+            </button>
+          </div>
+
+          {/* Locked Warning */}
+          {!stage.unlocked && (
+            <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 text-xs text-center">
+              🔒 ด่านนี้ยังไม่ปลดล็อค - ต้องผ่านด่านก่อนหน้าก่อน
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const VISIBLE_COUNT = 100; // Always show 100 items
 const LOAD_MORE_COUNT = 30; // Load/unload 30 items at a time
 const SCROLL_THRESHOLD = 100; // Pixels from edge to trigger load
@@ -361,66 +504,16 @@ export function MonsterHunting({
         </div>
       )}
 
-      {/* Selected Stage Details */}
+      {/* Stage Confirm Modal */}
       {selectedStage && (
-        <div className="mt-2 p-3 border-2 border-blue-500 bg-blue-50">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-bold text-lg">{selectedStage.name}</h3>
-              <p className="text-xs text-gray-600">
-                {selectedStage.description}
-              </p>
-            </div>
-            <button
-              onClick={() => onStartBattle(selectedStage)}
-              disabled={!selectedStage.unlocked}
-              className="retro-button px-4 py-2 bg-red-500 text-white font-bold disabled:opacity-50"
-            >
-              ⚔️ ต่อสู้!
-            </button>
-          </div>
-
-          {/* Monsters in Stage */}
-          <div className="mb-2">
-            <div className="text-xs font-bold mb-1">มอนสเตอร์:</div>
-            <div className="flex flex-wrap gap-2">
-              {getStageMonsterPreview(selectedStage).map((monster, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-1 p-1 bg-white border rounded text-xs"
-                >
-                  <span className="text-lg">{monster.icon}</span>
-                  <div>
-                    <div className="font-bold">{monster.name}</div>
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`px-1 rounded text-xs ${getRankColor(
-                          monster.rank
-                        )}`}
-                      >
-                        {monster.rank}
-                      </span>
-                      <span>Lv.{monster.level}</span>
-                      <span>{getElementIcon(monster.element)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rewards */}
-          <div className="flex gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <span>✨</span>
-              <span>EXP: {Math.floor(selectedStage.rewards.exp)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>💰</span>
-              <span>Gold: {Math.floor(selectedStage.rewards.gold)}</span>
-            </div>
-          </div>
-        </div>
+        <StageConfirmModal
+          stage={selectedStage}
+          onConfirm={() => {
+            onStartBattle(selectedStage);
+            setSelectedStage(null);
+          }}
+          onCancel={() => setSelectedStage(null)}
+        />
       )}
     </div>
   );

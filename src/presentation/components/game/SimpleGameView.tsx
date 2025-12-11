@@ -8,6 +8,7 @@ import type {
 } from "@/src/presentation/hooks/useGardenRoom";
 import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
 import { useCallback, useState } from "react";
+import { BattleView } from "./BattleView";
 import { CharacterMiniStatus, CharacterPanel } from "./CharacterPanel";
 import { MonsterHunting } from "./MonsterHunting";
 
@@ -408,28 +409,33 @@ export function SimpleGameView({
                 </div>
               )}
 
-              {activeTab === "battle" && (
-                <MonsterHunting
-                  highestClearedStage={highestClearedStage}
-                  onStartBattle={(stage) => {
-                    setCurrentBattle(stage);
-                    addLog(`⚔️ เริ่มต่อสู้ ${stage.name}!`);
-                    // TODO: Navigate to battle screen
-                    alert(
-                      `เริ่มต่อสู้ ${stage.name}!\n\nระบบต่อสู้กำลังพัฒนา...\n\nกด OK เพื่อจำลองชนะ`
-                    );
-                    // Simulate win for now
-                    if (stage.id > highestClearedStage) {
-                      setHighestClearedStage(stage.id);
-                    }
-                    addLog(
-                      `🎉 ชนะ! ได้รับ ${Math.floor(
-                        stage.rewards.exp
-                      )} EXP, ${Math.floor(stage.rewards.gold)} Gold`
-                    );
-                  }}
-                />
-              )}
+              {activeTab === "battle" &&
+                (currentBattle ? (
+                  <BattleView
+                    stage={currentBattle}
+                    onExit={() => {
+                      setCurrentBattle(null);
+                    }}
+                    onVictory={(rewards) => {
+                      // Update highest cleared stage (EXP/Gold already applied by BattleView)
+                      if (currentBattle.id > highestClearedStage) {
+                        setHighestClearedStage(currentBattle.id);
+                      }
+                      addLog(
+                        `🎉 ชนะ ${currentBattle.name}! +${rewards.exp} EXP, +${rewards.gold} Gold`
+                      );
+                      // Note: Don't setCurrentBattle(null) here - let onExit handle it
+                    }}
+                  />
+                ) : (
+                  <MonsterHunting
+                    highestClearedStage={highestClearedStage}
+                    onStartBattle={(stage) => {
+                      setCurrentBattle(stage);
+                      addLog(`⚔️ เริ่มต่อสู้ ${stage.name}!`);
+                    }}
+                  />
+                ))}
             </div>
           </div>
         </div>
