@@ -116,6 +116,23 @@ export class GardenRoom extends Room<GardenState> {
       }
     );
 
+    // Handle battle victory from client
+    this.onMessage(
+      "battle_victory",
+      (
+        client,
+        message: {
+          stageId: number;
+          stageName: string;
+          rewards: { exp: number; gold: number };
+          leveledUp: boolean;
+          newLevel?: number;
+        }
+      ) => {
+        this.handleBattleVictory(client, message);
+      }
+    );
+
     // Start game loop
     this.startGameLoop();
 
@@ -561,5 +578,41 @@ export class GardenRoom extends Room<GardenState> {
       player.highestClearedStage = stats.highestClearedStage;
 
     console.log(`📊 Stats updated for ${player.nickname}: Lv.${player.level}`);
+  }
+
+  /**
+   * Handle battle victory message from client
+   */
+  private handleBattleVictory(
+    client: Client,
+    message: {
+      stageId: number;
+      stageName: string;
+      rewards: { exp: number; gold: number };
+      leveledUp: boolean;
+      newLevel?: number;
+    }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Update player stats based on rewards
+    player.exp += message.rewards.exp;
+    player.gold += message.rewards.gold;
+
+    if (message.leveledUp && message.newLevel) {
+      player.level = message.newLevel;
+    }
+
+    // Update highest cleared stage
+    if (message.stageId > player.highestClearedStage) {
+      player.highestClearedStage = message.stageId;
+    }
+
+    console.log(
+      `🏆 ${player.nickname} won ${message.stageName}! +${message.rewards.exp} EXP, +${message.rewards.gold} Gold`
+    );
   }
 }
