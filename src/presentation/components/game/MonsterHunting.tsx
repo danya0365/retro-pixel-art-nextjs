@@ -7,38 +7,37 @@ import {
   MONSTERS,
   type BattleStage,
 } from "@/src/domain/data/monsters";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 interface MonsterHuntingProps {
   onStartBattle: (stage: BattleStage) => void;
   highestClearedStage: number;
 }
 
-const VISIBLE_RANGE = 100; // Show +-100 levels from cursor
+const VISIBLE_COUNT = 100; // Always show 100 items
+const LOAD_MORE_COUNT = 30; // Load/unload 30 items at a time
+const SCROLL_THRESHOLD = 100; // Pixels from edge to trigger load
 
 export function MonsterHunting({
   onStartBattle,
   highestClearedStage,
 }: MonsterHuntingProps) {
-  // Cursor position (current focused level)
-  const [cursorLevel, setCursorLevel] = useState(
-    Math.max(1, highestClearedStage + 1)
-  );
+  // Window start position (first visible level)
+  const [windowStart, setWindowStart] = useState(1);
   const [selectedStage, setSelectedStage] = useState<BattleStage | null>(null);
   const [inputLevel, setInputLevel] = useState("");
+  const [isLoadingTop, setIsLoadingTop] = useState(false);
+  const [isLoadingBottom, setIsLoadingBottom] = useState(false);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const cursorRef = useRef<HTMLButtonElement>(null);
+  const prevScrollTop = useRef(0);
+  const isScrolling = useRef(false);
 
-  // Update cursor when highestClearedStage changes
-  useEffect(() => {
-    setCursorLevel(Math.max(1, highestClearedStage + 1));
-  }, [highestClearedStage]);
-
-  // Generate stages based on cursor position (+-100)
+  // Generate stages for current window (always 100 items)
   const visibleStages = useMemo(() => {
     const stages: BattleStage[] = [];
-    const startLevel = Math.max(1, cursorLevel - VISIBLE_RANGE);
-    const endLevel = cursorLevel + VISIBLE_RANGE;
+    const startLevel = Math.max(1, windowStart);
+    const endLevel = startLevel + VISIBLE_COUNT - 1;
 
     for (let i = startLevel; i <= endLevel; i++) {
       const stage = generateStage(i);
@@ -49,51 +48,96 @@ export function MonsterHunting({
     }
 
     return stages;
-  }, [cursorLevel, highestClearedStage]);
+  }, [windowStart, highestClearedStage]);
 
-  // Scroll to cursor when it changes
-  useEffect(() => {
-    if (cursorRef.current) {
-      cursorRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+  // Handle scroll - Discord style loading
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container || isScrolling.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const scrollBottom = scrollHeight - scrollTop - clientHeight;
+
+    // Scrolling down - near bottom
+    if (scrollBottom < SCROLL_THRESHOLD && !isLoadingBottom) {
+      setIsLoadingBottom(true);
+      isScrolling.current = true;
+
+      // Load 30 more at bottom, remove 30 from top
+      setWindowStart((prev) => prev + LOAD_MORE_COUNT);
+
+      // Maintain scroll position
+      requestAnimationFrame(() => {
+        if (container) {
+          // Adjust scroll to compensate for removed items
+          container.scrollTop = scrollTop - LOAD_MORE_COUNT * 44; // ~44px per item
+        }
+        isScrolling.current = false;
+        setIsLoadingBottom(false);
       });
     }
-  }, [cursorLevel]);
 
-  // Navigate cursor
-  const moveCursor = useCallback(
-    (direction: "up" | "down" | "pageUp" | "pageDown" | "home" | "next") => {
-      setCursorLevel((prev) => {
-        switch (direction) {
-          case "up":
-            return Math.max(1, prev - 1);
-          case "down":
-            return prev + 1;
-          case "pageUp":
-            return Math.max(1, prev - 10);
-          case "pageDown":
-            return prev + 10;
-          case "home":
-            return 1;
-          case "next":
-            return highestClearedStage + 1;
-          default:
-            return prev;
+    // Scrolling up - near top
+    if (scrollTop < SCROLL_THRESHOLD && windowStart > 1 && !isLoadingTop) {
+      setIsLoadingTop(true);
+      isScrolling.current = true;
+
+      // Load 30 more at top, remove 30 from bottom
+      const newStart = Math.max(1, windowStart - LOAD_MORE_COUNT);
+      const actualLoaded = windowStart - newStart;
+      setWindowStart(newStart);
+
+      // Maintain scroll position
+      requestAnimationFrame(() => {
+        if (container && actualLoaded > 0) {
+          container.scrollTop = scrollTop + actualLoaded * 44;
         }
+        isScrolling.current = false;
+        setIsLoadingTop(false);
       });
-    },
-    [highestClearedStage]
-  );
+    }
+
+    prevScrollTop.current = scrollTop;
+  }, [windowStart, isLoadingTop, isLoadingBottom]);
 
   // Jump to specific level
-  const jumpToLevel = useCallback(() => {
-    const level = parseInt(inputLevel);
-    if (!isNaN(level) && level >= 1) {
-      setCursorLevel(level);
-      setInputLevel("");
+  const jumpToLevel = useCallback((level: number) => {
+    if (level >= 1) {
+      // Center the level in the window
+      const newStart = Math.max(1, level - Math.floor(VISIBLE_COUNT / 2));
+      setWindowStart(newStart);
+
+      // Scroll to center after render
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          const itemIndex = level - newStart;
+          container.scrollTop = Math.max(
+            0,
+            itemIndex * 44 - container.clientHeight / 2
+          );
+        }
+      });
     }
-  }, [inputLevel]);
+  }, []);
+
+  // Quick navigation functions
+  const goToStart = useCallback(() => {
+    setWindowStart(1);
+    requestAnimationFrame(() => {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }, []);
+
+  const goToNext = useCallback(() => {
+    jumpToLevel(highestClearedStage + 1);
+  }, [highestClearedStage, jumpToLevel]);
+
+  const goToEnd = useCallback(() => {
+    // Go to a very high level (infinite)
+    const targetLevel = Math.max(highestClearedStage + 100, windowStart + 200);
+    jumpToLevel(targetLevel);
+  }, [highestClearedStage, windowStart, jumpToLevel]);
 
   // Get stage monsters info
   const getStageMonsterPreview = useMemo(() => {
@@ -110,7 +154,7 @@ export function MonsterHunting({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with Cursor Controls */}
+      {/* Header - Discord Style */}
       <div className="mb-2 p-2 bg-gradient-to-r from-red-700 to-red-500 text-white">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -123,57 +167,36 @@ export function MonsterHunting({
           </div>
         </div>
 
-        {/* Cursor Navigation */}
-        <div className="flex items-center gap-2 text-xs">
+        {/* Quick Navigation */}
+        <div className="flex items-center gap-2 text-xs flex-wrap">
           <button
-            onClick={() => moveCursor("home")}
+            onClick={goToStart}
             className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
             title="ไปด่าน 1"
           >
-            ⏮️ 1
+            ⏮️ ด่าน 1
           </button>
           <button
-            onClick={() => moveCursor("pageUp")}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
-            title="-10 ด่าน"
-          >
-            ◀️ -10
-          </button>
-          <button
-            onClick={() => moveCursor("up")}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
-            title="-1 ด่าน"
-          >
-            ▲
-          </button>
-
-          {/* Current Cursor Position */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-yellow-400 text-black rounded font-bold">
-            <span>📍</span>
-            <span>ด่าน {cursorLevel}</span>
-          </div>
-
-          <button
-            onClick={() => moveCursor("down")}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
-            title="+1 ด่าน"
-          >
-            ▼
-          </button>
-          <button
-            onClick={() => moveCursor("pageDown")}
-            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
-            title="+10 ด่าน"
-          >
-            +10 ▶️
-          </button>
-          <button
-            onClick={() => moveCursor("next")}
+            onClick={goToNext}
             className="px-2 py-1 bg-green-400 text-black hover:bg-green-300 rounded font-bold"
             title="ไปด่านถัดไป"
           >
-            🎯 Next
+            🎯 ด่านถัดไป ({highestClearedStage + 1})
           </button>
+          <button
+            onClick={goToEnd}
+            className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded"
+            title="ไปด่านไกลๆ"
+          >
+            ⏭️ ไปไกล
+          </button>
+
+          {/* Current Window Info */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-black/20 rounded">
+            <span>
+              📍 แสดงด่าน {windowStart} - {windowStart + VISIBLE_COUNT - 1}
+            </span>
+          </div>
         </div>
 
         {/* Jump to Level */}
@@ -182,50 +205,72 @@ export function MonsterHunting({
             type="number"
             value={inputLevel}
             onChange={(e) => setInputLevel(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && jumpToLevel()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const level = parseInt(inputLevel);
+                if (!isNaN(level) && level >= 1) {
+                  jumpToLevel(level);
+                  setInputLevel("");
+                }
+              }
+            }}
             placeholder="กระโดดไปด่าน..."
             className="flex-1 px-2 py-1 text-black text-xs rounded"
             min={1}
           />
           <button
-            onClick={jumpToLevel}
+            onClick={() => {
+              const level = parseInt(inputLevel);
+              if (!isNaN(level) && level >= 1) {
+                jumpToLevel(level);
+                setInputLevel("");
+              }
+            }}
             className="px-3 py-1 bg-yellow-400 text-black hover:bg-yellow-300 rounded font-bold"
           >
             GO
           </button>
         </div>
-
-        {/* Range Info */}
-        <div className="text-xs text-white/70 mt-1 text-center">
-          แสดงด่าน {Math.max(1, cursorLevel - VISIBLE_RANGE)} -{" "}
-          {cursorLevel + VISIBLE_RANGE}
-        </div>
       </div>
 
-      {/* Stage List - Cursor Based */}
+      {/* Loading indicator - top */}
+      {isLoadingTop && (
+        <div className="text-center text-xs text-gray-500 py-1">
+          ⏳ กำลังโหลดด่านก่อนหน้า...
+        </div>
+      )}
+
+      {/* Stage List - Discord Style Virtual Scroll */}
       <div
         ref={scrollContainerRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto space-y-1 pr-1"
-        style={{ maxHeight: "350px" }}
+        style={{ maxHeight: "320px" }}
       >
+        {/* Top boundary indicator */}
+        {windowStart > 1 && (
+          <div
+            className="text-center text-xs text-blue-500 py-2 cursor-pointer hover:bg-blue-50"
+            onClick={() => jumpToLevel(Math.max(1, windowStart - 50))}
+          >
+            ⬆️ เลื่อนขึ้นเพื่อดูด่าน 1-{windowStart - 1} (คลิกเพื่อไป)
+          </div>
+        )}
+
         {visibleStages.map((stage) => {
           const isSelected = selectedStage?.id === stage.id;
-          const isCursor = stage.id === cursorLevel;
+          const isNextStage = stage.id === highestClearedStage + 1;
           const monsters = getStageMonsterPreview(stage);
 
           return (
             <button
               key={stage.id}
-              ref={isCursor ? cursorRef : null}
-              onClick={() => {
-                setCursorLevel(stage.id);
-                setSelectedStage(stage);
-              }}
+              onClick={() => setSelectedStage(stage)}
               disabled={!stage.unlocked}
               className={`
                 w-full p-2 border text-left transition-all
                 ${
-                  isCursor
+                  isNextStage
                     ? "bg-yellow-100 border-yellow-500 border-2 ring-2 ring-yellow-400"
                     : isSelected
                     ? "bg-blue-100 border-blue-500"
@@ -237,8 +282,8 @@ export function MonsterHunting({
               `}
             >
               <div className="flex items-center gap-2">
-                {/* Cursor Indicator */}
-                {isCursor && <span className="text-yellow-600">👉</span>}
+                {/* Next Stage Indicator */}
+                {isNextStage && <span className="text-yellow-600">👉</span>}
 
                 {/* Stage Number */}
                 <div
@@ -247,7 +292,7 @@ export function MonsterHunting({
                   ${
                     stage.completed
                       ? "bg-green-500 text-white"
-                      : isCursor
+                      : isNextStage
                       ? "bg-yellow-400"
                       : "bg-gray-100"
                   }
@@ -299,7 +344,22 @@ export function MonsterHunting({
             </button>
           );
         })}
+
+        {/* Bottom boundary indicator */}
+        <div
+          className="text-center text-xs text-blue-500 py-2 cursor-pointer hover:bg-blue-50"
+          onClick={() => jumpToLevel(windowStart + VISIBLE_COUNT + 50)}
+        >
+          ⬇️ เลื่อนลงเพื่อดูด่านถัดไป (คลิกเพื่อไป)
+        </div>
       </div>
+
+      {/* Loading indicator - bottom */}
+      {isLoadingBottom && (
+        <div className="text-center text-xs text-gray-500 py-1">
+          ⏳ กำลังโหลดด่านถัดไป...
+        </div>
+      )}
 
       {/* Selected Stage Details */}
       {selectedStage && (
