@@ -273,6 +273,15 @@ export class GardenRoom extends Room<GardenState> {
       z: player.z,
     });
 
+    // ✅ Sync inventory and pets to client on join
+    this.sendInventoryUpdate(client, player);
+    this.sendPetUpdate(client, player);
+
+    // ✅ Give starter pet if player has no pets
+    if (player.pets.length === 0) {
+      this.giveStarterPet(client, player);
+    }
+
     console.log(
       `✅ "${player.nickname}" ${player.avatar} spawned at (${player.x.toFixed(
         1
@@ -1150,6 +1159,13 @@ export class GardenRoom extends Room<GardenState> {
     this.sendPetUpdate(client, player);
     this.sendInventoryUpdate(client, player);
 
+    // Send success message
+    client.send("pet_action_success", {
+      action: "adopt",
+      petName: newPet.name,
+      message: `ยินดีต้อนรับ ${newPet.name} สู่ครอบครัว! 🎉🐾`,
+    });
+
     console.log(
       `🐾 ${player.nickname} adopted ${newPet.name} (${message.petId})`
     );
@@ -1167,6 +1183,16 @@ export class GardenRoom extends Room<GardenState> {
     const pet = player.pets[message.petIndex];
     if (!pet) {
       client.send("error", { message: "ไม่พบสัตว์เลี้ยง" });
+      return;
+    }
+
+    // Check cooldown (10 seconds between feeds)
+    const feedCooldown = 10 * 1000;
+    if (Date.now() - pet.lastFedAt < feedCooldown) {
+      const remaining = Math.ceil(
+        (feedCooldown - (Date.now() - pet.lastFedAt)) / 1000
+      );
+      client.send("error", { message: `รออีก ${remaining} วินาที` });
       return;
     }
 
@@ -1201,6 +1227,14 @@ export class GardenRoom extends Room<GardenState> {
     // Send update
     this.sendPetUpdate(client, player);
     this.sendInventoryUpdate(client, player);
+
+    // Send success message
+    client.send("pet_action_success", {
+      action: "feed",
+      petName: pet.name,
+      message: `ให้อาหาร ${pet.name} แล้ว! 🍖`,
+      stats: { hunger: pet.hunger, happiness: pet.happiness },
+    });
 
     console.log(`🍖 ${player.nickname} fed ${pet.name}`);
   }
@@ -1242,6 +1276,14 @@ export class GardenRoom extends Room<GardenState> {
     // Send update
     this.sendPetUpdate(client, player);
 
+    // Send success message
+    client.send("pet_action_success", {
+      action: "play",
+      petName: pet.name,
+      message: `เล่นกับ ${pet.name} แล้ว! 🎾 +10 EXP`,
+      stats: { happiness: pet.happiness, energy: pet.energy, exp: pet.exp },
+    });
+
     console.log(`🎾 ${player.nickname} played with ${pet.name}`);
   }
 
@@ -1264,6 +1306,13 @@ export class GardenRoom extends Room<GardenState> {
 
     // Send update
     this.sendPetUpdate(client, player);
+
+    // Send success message
+    client.send("pet_action_success", {
+      action: "set_active",
+      petName: pet.name,
+      message: `ตั้ง ${pet.name} เป็นสัตว์เลี้ยงตามตัวแล้ว! ⭐`,
+    });
 
     console.log(`🐾 ${player.nickname} set active pet: ${pet.name}`);
   }
@@ -1291,6 +1340,13 @@ export class GardenRoom extends Room<GardenState> {
 
     // Send update
     this.sendPetUpdate(client, player);
+
+    // Send success message
+    client.send("pet_action_success", {
+      action: "rename",
+      petName: pet.name,
+      message: `เปลี่ยนชื่อจาก ${oldName} เป็น ${pet.name} แล้ว! ✏️`,
+    });
 
     console.log(`✏️ ${player.nickname} renamed pet: ${oldName} -> ${pet.name}`);
   }
@@ -1342,5 +1398,43 @@ export class GardenRoom extends Room<GardenState> {
       pets,
       activePetId: player.activePetId,
     });
+  }
+
+  /**
+   * Give starter pet to new player
+   */
+  private giveStarterPet(client: Client, player: GardenPlayer) {
+    // Random starter pet
+    const starterPets = ["pet_cat", "pet_dog", "pet_rabbit"];
+    const petId = starterPets[Math.floor(Math.random() * starterPets.length)];
+
+    // Create new pet
+    const newPet = new PetSchema();
+    newPet.petId = petId;
+    newPet.name = this.getDefaultPetName(petId);
+    newPet.happiness = 100;
+    newPet.hunger = 100;
+    newPet.energy = 100;
+    newPet.level = 1;
+    newPet.exp = 0;
+    newPet.adoptedAt = Date.now();
+    newPet.lastFedAt = Date.now();
+    newPet.lastPlayedAt = Date.now();
+
+    player.pets.push(newPet);
+    player.activePetId = petId;
+
+    // Give some starter items too
+    this.addItemToInventory(player, "food_bread", 5);
+    this.addItemToInventory(player, "food_meat", 3);
+    this.addItemToInventory(player, "potion_hp_small", 3);
+
+    // Send updates
+    this.sendPetUpdate(client, player);
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `🎁 ${player.nickname} received starter pet: ${newPet.name} (${petId})`
+    );
   }
 }

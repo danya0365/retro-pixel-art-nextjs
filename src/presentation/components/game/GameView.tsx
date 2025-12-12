@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationToast } from "@/src/presentation/components/ui/NotificationToast";
 import { CreateUserModal } from "@/src/presentation/components/user/CreateUserModal";
 import { useGardenRoom } from "@/src/presentation/hooks/useGardenRoom";
 import { useIsHydrated, useUser } from "@/src/presentation/stores/userStore";
@@ -219,6 +220,9 @@ function GameWithMultiplayer({
           </div>
         </div>
       )}
+
+      {/* Notification Toast */}
+      <NotificationToast />
     </div>
   );
 }

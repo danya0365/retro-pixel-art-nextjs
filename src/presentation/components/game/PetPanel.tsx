@@ -5,7 +5,6 @@ import { gameClient } from "@/src/infrastructure/colyseus/GameClient";
 import { useCharacterStore } from "@/src/presentation/stores/characterStore";
 import { useState } from "react";
 
-// Pet icons mapping
 const PET_ICONS: Record<string, string> = {
   pet_cat: "🐱",
   pet_dog: "🐕",
@@ -31,12 +30,10 @@ export function PetPanel() {
   const [showAdoptModal, setShowAdoptModal] = useState(false);
   const [selectedPetIndex, setSelectedPetIndex] = useState<number | null>(null);
 
-  // Find pet items in inventory
   const petItems = inventory.filter((item) => item.itemId.startsWith("pet_"));
 
   return (
     <div className="space-y-3">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h3 className="font-bold text-sm">
           🐾 สัตว์เลี้ยงของฉัน ({pets.length}/5)
@@ -44,14 +41,13 @@ export function PetPanel() {
         {petItems.length > 0 && (
           <button
             onClick={() => setShowAdoptModal(true)}
-            className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+            className="retro-button text-xs px-2 py-1"
           >
             + รับเลี้ยงใหม่
           </button>
         )}
       </div>
 
-      {/* Pet List */}
       {pets.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <div className="text-4xl mb-2">🐾</div>
@@ -78,9 +74,8 @@ export function PetPanel() {
         </div>
       )}
 
-      {/* Selected Pet Actions */}
       {selectedPetIndex !== null && pets[selectedPetIndex] && (
-        <PetActions
+        <PetActionsModal
           pet={pets[selectedPetIndex]}
           petIndex={selectedPetIndex}
           isActive={pets[selectedPetIndex].petId === activePetId}
@@ -88,7 +83,6 @@ export function PetPanel() {
         />
       )}
 
-      {/* Adopt Modal */}
       {showAdoptModal && (
         <AdoptPetModal
           petItems={petItems}
@@ -98,10 +92,6 @@ export function PetPanel() {
     </div>
   );
 }
-
-// ============================================
-// Pet Card Component
-// ============================================
 
 function PetCard({
   pet,
@@ -126,69 +116,32 @@ function PetCard({
   return (
     <button
       onClick={onSelect}
-      className={`w-full p-3 rounded border-2 text-left transition-all ${
-        isSelected
-          ? "border-blue-500 bg-blue-50"
-          : isActive
-          ? "border-yellow-400 bg-yellow-50"
-          : "border-gray-200 bg-white hover:bg-gray-50"
+      className={`w-full p-2 text-left transition-all retro-inset ${
+        isSelected ? "bg-blue-100" : isActive ? "bg-yellow-50" : ""
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="text-3xl">{icon}</div>
+        <div className="text-2xl">{icon}</div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold">{pet.name}</span>
+            <span className="font-bold text-sm">{pet.name}</span>
             {isActive && (
-              <span className="text-xs bg-yellow-300 px-1 rounded">ตามตัว</span>
+              <span className="text-xs bg-yellow-300 px-1 rounded">⭐</span>
             )}
             <span className="text-xs text-gray-500">Lv.{pet.level}</span>
           </div>
-          <div className="flex gap-2 mt-1 text-xs">
-            <span title="ความสุข">😊 {pet.happiness}%</span>
-            <span title="ความอิ่ม">🍖 {pet.hunger}%</span>
-            <span title="พลังงาน">⚡ {pet.energy}%</span>
+          <div className="flex gap-3 mt-1 text-xs">
+            <span>😊{pet.happiness}%</span>
+            <span>🍖{pet.hunger}%</span>
+            <span>⚡{pet.energy}%</span>
           </div>
         </div>
-      </div>
-
-      {/* Status Bars */}
-      <div className="mt-2 space-y-1">
-        <StatusBar label="😊" value={pet.happiness} color="bg-pink-400" />
-        <StatusBar label="🍖" value={pet.hunger} color="bg-orange-400" />
-        <StatusBar label="⚡" value={pet.energy} color="bg-yellow-400" />
       </div>
     </button>
   );
 }
 
-function StatusBar({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-xs w-4">{label}</span>
-      <div className="flex-1 h-2 bg-gray-200 rounded overflow-hidden">
-        <div
-          className={`h-full ${color} transition-all`}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Pet Actions Component
-// ============================================
-
-function PetActions({
+function PetActionsModal({
   pet,
   petIndex,
   isActive,
@@ -199,6 +152,9 @@ function PetActions({
     name: string;
     happiness: number;
     hunger: number;
+    energy: number;
+    level: number;
+    exp: number;
   };
   petIndex: number;
   isActive: boolean;
@@ -206,18 +162,17 @@ function PetActions({
 }) {
   const [newName, setNewName] = useState(pet.name);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const handleFeed = () => {
-    gameClient.feedPet(petIndex);
+  const handleAction = (action: string, callback: () => void) => {
+    setActionLoading(action);
+    callback();
+    setTimeout(() => setActionLoading(null), 500);
   };
 
-  const handlePlay = () => {
-    gameClient.playWithPet(petIndex);
-  };
-
-  const handleSetActive = () => {
-    gameClient.setActivePet(petIndex);
-  };
+  const handleFeed = () => handleAction("feed", () => gameClient.feedPet(petIndex));
+  const handlePlay = () => handleAction("play", () => gameClient.playWithPet(petIndex));
+  const handleSetActive = () => handleAction("active", () => gameClient.setActivePet(petIndex));
 
   const handleRename = () => {
     if (newName.trim() && newName !== pet.name) {
@@ -226,68 +181,120 @@ function PetActions({
     setIsRenaming(false);
   };
 
-  return (
-    <div className="p-3 bg-blue-50 border-2 border-blue-300 rounded">
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{PET_ICONS[pet.petId] || "🐾"}</span>
-          {isRenaming ? (
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onBlur={handleRename}
-              onKeyDown={(e) => e.key === "Enter" && handleRename()}
-              className="px-2 py-0.5 border rounded text-sm"
-              maxLength={20}
-              autoFocus
-            />
-          ) : (
-            <button
-              onClick={() => setIsRenaming(true)}
-              className="font-bold hover:underline"
-            >
-              {pet.name} ✏️
-            </button>
-          )}
-        </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          ✕
-        </button>
-      </div>
+  const icon = PET_ICONS[pet.petId] || "🐾";
 
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          onClick={handleFeed}
-          className="py-2 text-sm bg-orange-100 hover:bg-orange-200 rounded flex flex-col items-center"
-        >
-          <span className="text-lg">🍖</span>
-          <span className="text-xs">ให้อาหาร</span>
-        </button>
-        <button
-          onClick={handlePlay}
-          className="py-2 text-sm bg-pink-100 hover:bg-pink-200 rounded flex flex-col items-center"
-        >
-          <span className="text-lg">🎾</span>
-          <span className="text-xs">เล่นด้วย</span>
-        </button>
-        {!isActive && (
-          <button
-            onClick={handleSetActive}
-            className="py-2 text-sm bg-yellow-100 hover:bg-yellow-200 rounded flex flex-col items-center"
-          >
-            <span className="text-lg">⭐</span>
-            <span className="text-xs">ตั้งตามตัว</span>
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="retro-window w-80 max-w-[90vw]">
+        <div className="retro-window-titlebar">
+          <span className="retro-window-title">
+            {icon} {pet.name} - สัตว์เลี้ยง
+          </span>
+          <div className="retro-window-controls">
+            <button className="retro-window-btn" onClick={onClose}>
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="retro-window-content p-3">
+          <div className="flex items-center gap-3 mb-3 p-2 retro-inset">
+            <span className="text-4xl">{icon}</span>
+            <div className="flex-1">
+              {isRenaming ? (
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onBlur={handleRename}
+                  onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                  className="retro-input w-full text-sm"
+                  maxLength={20}
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsRenaming(true)}
+                    className="font-bold text-sm hover:underline"
+                  >
+                    {pet.name} ✏️
+                  </button>
+                  <div className="text-xs">
+                    Lv.{pet.level} • EXP: {pet.exp}
+                    {isActive && <span className="ml-2 text-yellow-700">⭐ ตามตัว</span>}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <fieldset className="retro-fieldset mb-3">
+            <legend>📊 สถานะ</legend>
+            <div className="space-y-2 p-2">
+              <Win98ProgressBar label="😊 ความสุข" value={pet.happiness} />
+              <Win98ProgressBar label="🍖 ความอิ่ม" value={pet.hunger} />
+              <Win98ProgressBar label="⚡ พลังงาน" value={pet.energy} />
+            </div>
+          </fieldset>
+
+          <fieldset className="retro-fieldset mb-3">
+            <legend>🎮 คำสั่ง</legend>
+            <div className="grid grid-cols-2 gap-2 p-2">
+              <button
+                onClick={handleFeed}
+                disabled={actionLoading === "feed"}
+                className="retro-button flex flex-col items-center py-2"
+              >
+                <span className="text-xl">{actionLoading === "feed" ? "⏳" : "🍖"}</span>
+                <span className="text-xs">ให้อาหาร</span>
+              </button>
+              <button
+                onClick={handlePlay}
+                disabled={actionLoading === "play"}
+                className="retro-button flex flex-col items-center py-2"
+              >
+                <span className="text-xl">{actionLoading === "play" ? "⏳" : "🎾"}</span>
+                <span className="text-xs">เล่นด้วย</span>
+              </button>
+              {!isActive && (
+                <button
+                  onClick={handleSetActive}
+                  disabled={actionLoading === "active"}
+                  className="retro-button flex flex-col items-center py-2 col-span-2"
+                >
+                  <span className="text-xl">{actionLoading === "active" ? "⏳" : "⭐"}</span>
+                  <span className="text-xs">ตั้งตามตัว</span>
+                </button>
+              )}
+            </div>
+          </fieldset>
+
+          <button onClick={onClose} className="retro-button w-full">
+            ปิด
           </button>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ============================================
-// Adopt Pet Modal
-// ============================================
+function Win98ProgressBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>{label}</span>
+        <span>{value}%</span>
+      </div>
+      <div className="retro-inset h-4 p-0.5">
+        <div
+          className="h-full bg-blue-600 transition-all"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 function AdoptPetModal({
   petItems,
@@ -308,80 +315,72 @@ function AdoptPetModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-4 w-80 max-w-[90vw]">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold">🐾 รับเลี้ยงสัตว์</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-2 mb-4">
-          {petItems.map((item) => {
-            const petInfo = getItemById(item.itemId);
-            const icon = PET_ICONS[item.itemId] || "🐾";
-            const name = PET_NAMES[item.itemId] || item.itemId;
-
-            return (
-              <button
-                key={item.itemId}
-                onClick={() => setSelectedPet(item.itemId)}
-                className={`w-full p-3 rounded border-2 text-left flex items-center gap-3 ${
-                  selectedPet === item.itemId
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <span className="text-3xl">{icon}</span>
-                <div className="flex-1">
-                  <div className="font-bold">{name}</div>
-                  <div className="text-xs text-gray-500">
-                    {petInfo?.description || "สัตว์เลี้ยงน่ารัก"}
-                  </div>
-                </div>
-                <div className="text-xs text-gray-400">x{item.quantity}</div>
-              </button>
-            );
-          })}
-        </div>
-
-        {selectedPet && (
-          <div className="mb-4">
-            <label className="block text-sm font-bold mb-1">
-              ตั้งชื่อสัตว์เลี้ยง
-            </label>
-            <input
-              type="text"
-              value={petName}
-              onChange={(e) => setPetName(e.target.value)}
-              placeholder={PET_NAMES[selectedPet] || "ชื่อสัตว์เลี้ยง"}
-              className="w-full px-3 py-2 border rounded"
-              maxLength={20}
-            />
+      <div className="retro-window w-80 max-w-[90vw]">
+        <div className="retro-window-titlebar">
+          <span className="retro-window-title">🐾 รับเลี้ยงสัตว์</span>
+          <div className="retro-window-controls">
+            <button className="retro-window-btn" onClick={onClose}>
+              ✕
+            </button>
           </div>
-        )}
+        </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            ยกเลิก
-          </button>
-          <button
-            onClick={handleAdopt}
-            disabled={!selectedPet}
-            className={`flex-1 py-2 rounded ${
-              selectedPet
-                ? "bg-green-500 text-white hover:bg-green-600"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            รับเลี้ยง 🐾
-          </button>
+        <div className="retro-window-content p-3">
+          <fieldset className="retro-fieldset mb-3">
+            <legend>เลือกสัตว์เลี้ยง</legend>
+            <div className="space-y-1 p-2 max-h-40 overflow-y-auto">
+              {petItems.map((item) => {
+                const petInfo = getItemById(item.itemId);
+                const icon = PET_ICONS[item.itemId] || "🐾";
+                const name = PET_NAMES[item.itemId] || item.itemId;
+
+                return (
+                  <button
+                    key={item.itemId}
+                    onClick={() => setSelectedPet(item.itemId)}
+                    className={`w-full p-2 text-left retro-button ${
+                      selectedPet === item.itemId ? "retro-button-active" : ""
+                    }`}
+                  >
+                    <span className="text-xl mr-2">{icon}</span>
+                    <span>{name}</span>
+                    <span className="text-xs ml-2 text-gray-500">
+                      x{item.quantity}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          {selectedPet && (
+            <fieldset className="retro-fieldset mb-3">
+              <legend>ตั้งชื่อ</legend>
+              <div className="p-2">
+                <input
+                  type="text"
+                  value={petName}
+                  onChange={(e) => setPetName(e.target.value)}
+                  placeholder={PET_NAMES[selectedPet] || "ชื่อสัตว์เลี้ยง"}
+                  className="retro-input w-full"
+                  maxLength={20}
+                />
+              </div>
+            </fieldset>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleAdopt}
+              disabled={!selectedPet}
+              className="retro-button flex-1"
+            >
+              รับเลี้ยง 🐾
+            </button>
+            <button onClick={onClose} className="retro-button flex-1">
+              ยกเลิก
+            </button>
+          </div>
         </div>
       </div>
     </div>

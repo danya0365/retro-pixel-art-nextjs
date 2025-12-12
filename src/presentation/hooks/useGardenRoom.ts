@@ -308,16 +308,32 @@ export function useGardenRoom({
         console.log("💊 Consumable used:", data);
       });
 
-      // ✅ รับ error จาก server
+      // รับ error จาก server
       room.onMessage("error", (data) => {
-        console.error("❌ Server error:", data.message);
+        console.warn(" Server message:", data.message);
+        // Show notification to user via store
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showError }) => {
+            showError(data.message);
+          }
+        );
       });
 
-      // ✅ รับ pets sync จาก server
+      // รับ pets sync จาก server
       room.onMessage("pets_synced", (data) => {
         console.log("🐾 Pets synced from server:", data);
         const { syncPetsFromServer } = useCharacterStore.getState();
         syncPetsFromServer(data);
+      });
+
+      // รับ pet action success จาก server
+      room.onMessage("pet_action_success", (data) => {
+        console.log("✅ Pet action success:", data);
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showSuccess }) => {
+            showSuccess(data.message);
+          }
+        );
       });
 
       // Handle disconnect
