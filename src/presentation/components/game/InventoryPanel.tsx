@@ -10,8 +10,9 @@ import { RARITY_BG_COLORS, RARITY_COLORS } from "@/src/domain/types/item";
 import { gameClient } from "@/src/infrastructure/colyseus/GameClient";
 import { useCharacterStore } from "@/src/presentation/stores/characterStore";
 import { useState } from "react";
+import { PetPanel } from "./PetPanel";
 
-type TabType = "inventory" | "equipment" | "shop";
+type TabType = "inventory" | "equipment" | "pets";
 
 export function InventoryPanel() {
   const [activeTab, setActiveTab] = useState<TabType>("inventory");
@@ -41,21 +42,21 @@ export function InventoryPanel() {
           ⚔️ อุปกรณ์
         </button>
         <button
-          onClick={() => setActiveTab("shop")}
+          onClick={() => setActiveTab("pets")}
           className={`px-3 py-1 text-xs ${
-            activeTab === "shop"
+            activeTab === "pets"
               ? "bg-blue-500 text-white"
               : "bg-gray-200 hover:bg-gray-300"
           }`}
         >
-          🏪 ร้านค้า
+          🐾 สัตว์เลี้ยง
         </button>
       </div>
 
       {/* Tab Content */}
       {activeTab === "inventory" && <InventoryTab />}
       {activeTab === "equipment" && <EquipmentTab />}
-      {activeTab === "shop" && <ShopTab />}
+      {activeTab === "pets" && <PetPanel />}
     </div>
   );
 }
@@ -254,106 +255,6 @@ function EquipmentStatsPreview() {
       {totalBonus.mp > 0 && (
         <div className="text-cyan-600">MP +{totalBonus.mp}</div>
       )}
-    </div>
-  );
-}
-
-// ============================================
-// Shop Tab
-// ============================================
-
-const SHOP_ITEMS = [
-  { itemId: "chest_bronze", price: 100 },
-  { itemId: "chest_silver", price: 500 },
-  { itemId: "chest_gold", price: 2000 },
-  { itemId: "chest_legendary", price: 10000 },
-  { itemId: "potion_hp_small", price: 25 },
-  { itemId: "potion_hp_medium", price: 80 },
-  { itemId: "potion_mp_small", price: 30 },
-];
-
-function ShopTab() {
-  const gold = useCharacterStore((state) => state.character.gold);
-  const [quantity, setQuantity] = useState<Record<string, number>>({});
-
-  const handleBuy = (itemId: string) => {
-    const qty = quantity[itemId] || 1;
-    gameClient.buyItem(itemId, qty);
-    setQuantity((prev) => ({ ...prev, [itemId]: 1 }));
-  };
-
-  return (
-    <div className="space-y-2">
-      {/* Gold Display */}
-      <div className="flex justify-between items-center p-2 bg-yellow-50 border border-yellow-300 rounded">
-        <span className="font-bold">💰 Gold</span>
-        <span className="text-yellow-600 font-bold">
-          {gold.toLocaleString()} G
-        </span>
-      </div>
-
-      {/* Shop Items */}
-      <div className="space-y-1 max-h-[250px] overflow-y-auto">
-        {SHOP_ITEMS.map((shopItem) => {
-          const item = getItemById(shopItem.itemId);
-          if (!item) return null;
-
-          const qty = quantity[shopItem.itemId] || 1;
-          const totalPrice = shopItem.price * qty;
-          const canAfford = gold >= totalPrice;
-
-          return (
-            <div
-              key={shopItem.itemId}
-              className={`flex items-center gap-2 p-2 border rounded ${
-                RARITY_BG_COLORS[item.rarity]
-              }`}
-            >
-              <div className="text-2xl">{item.icon}</div>
-              <div className="flex-1">
-                <div
-                  className={`text-sm font-bold ${RARITY_COLORS[item.rarity]}`}
-                >
-                  {item.name}
-                </div>
-                <div className="text-xs text-gray-500">{item.description}</div>
-                <div className="text-xs text-yellow-600 font-bold">
-                  {shopItem.price.toLocaleString()} G
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={qty}
-                  onChange={(e) =>
-                    setQuantity((prev) => ({
-                      ...prev,
-                      [shopItem.itemId]: Math.max(
-                        1,
-                        parseInt(e.target.value) || 1
-                      ),
-                    }))
-                  }
-                  className="w-12 px-1 py-0.5 text-xs border rounded text-center"
-                />
-                <button
-                  onClick={() => handleBuy(shopItem.itemId)}
-                  disabled={!canAfford}
-                  className={`px-2 py-1 text-xs rounded ${
-                    canAfford
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  ซื้อ
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }

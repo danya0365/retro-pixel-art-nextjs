@@ -18,6 +18,22 @@ export class EquipmentSchema extends Schema {
 }
 
 /**
+ * Pet Schema - สัตว์เลี้ยงของผู้เล่น
+ */
+export class PetSchema extends Schema {
+  @type("string") petId: string = ""; // pet_cat, pet_dog, etc.
+  @type("string") name: string = ""; // ชื่อที่ผู้เล่นตั้ง
+  @type("number") happiness: number = 100; // 0-100 ความสุข
+  @type("number") hunger: number = 100; // 0-100 ความอิ่ม
+  @type("number") energy: number = 100; // 0-100 พลังงาน
+  @type("number") level: number = 1;
+  @type("number") exp: number = 0;
+  @type("number") adoptedAt: number = 0; // timestamp ที่รับเลี้ยง
+  @type("number") lastFedAt: number = 0; // timestamp ล่าสุดที่ให้อาหาร
+  @type("number") lastPlayedAt: number = 0; // timestamp ล่าสุดที่เล่นด้วย
+}
+
+/**
  * Player state in the garden world
  */
 export class GardenPlayer extends Schema {
@@ -66,6 +82,12 @@ export class GardenPlayer extends Schema {
   // Inventory (Array of items with quantity)
   @type([InventoryItemSchema]) inventory =
     new ArraySchema<InventoryItemSchema>();
+
+  // Pets (Array of owned pets)
+  @type([PetSchema]) pets = new ArraySchema<PetSchema>();
+
+  // Active Pet (currently following player)
+  @type("string") activePetId: string = ""; // petId of active pet
 }
 
 /**

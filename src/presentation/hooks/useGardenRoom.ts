@@ -313,6 +313,13 @@ export function useGardenRoom({
         console.error("❌ Server error:", data.message);
       });
 
+      // ✅ รับ pets sync จาก server
+      room.onMessage("pets_synced", (data) => {
+        console.log("🐾 Pets synced from server:", data);
+        const { syncPetsFromServer } = useCharacterStore.getState();
+        syncPetsFromServer(data);
+      });
+
       // Handle disconnect
       room.onLeave((code) => {
         console.log("👋 Left garden room:", code);

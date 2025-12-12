@@ -445,6 +445,45 @@ class GameClientManager {
   useConsumable(itemId: string): void {
     this.sendMessage("use_consumable", { itemId });
   }
+
+  // ============================================
+  // Pet System Methods
+  // ============================================
+
+  /**
+   * Adopt a pet from inventory
+   */
+  adoptPet(petId: string, name: string): void {
+    this.sendMessage("adopt_pet", { petId, name });
+  }
+
+  /**
+   * Feed a pet
+   */
+  feedPet(petIndex: number): void {
+    this.sendMessage("feed_pet", { petIndex });
+  }
+
+  /**
+   * Play with a pet
+   */
+  playWithPet(petIndex: number): void {
+    this.sendMessage("play_with_pet", { petIndex });
+  }
+
+  /**
+   * Set active pet (follows player)
+   */
+  setActivePet(petIndex: number): void {
+    this.sendMessage("set_active_pet", { petIndex });
+  }
+
+  /**
+   * Rename a pet
+   */
+  renamePet(petIndex: number, name: string): void {
+    this.sendMessage("rename_pet", { petIndex, name });
+  }
 }
 
 // Export singleton instance

@@ -82,6 +82,20 @@ export interface ServerEquipment {
   accessory: string | null;
 }
 
+// Pet (from server)
+export interface Pet {
+  petId: string;
+  name: string;
+  happiness: number;
+  hunger: number;
+  energy: number;
+  level: number;
+  exp: number;
+  adoptedAt: number;
+  lastFedAt: number;
+  lastPlayedAt: number;
+}
+
 export interface CharacterState {
   // Identity
   name: string;
@@ -107,6 +121,10 @@ export interface CharacterState {
   // Inventory (synced from server)
   inventory: InventoryItem[];
   serverEquipment: ServerEquipment;
+
+  // Pets (synced from server)
+  pets: Pet[];
+  activePetId: string;
 }
 
 // ============================================
@@ -253,6 +271,8 @@ interface CharacterStore {
     equipment: ServerEquipment;
     gold: number;
   }) => void;
+  // ✅ Sync pets from server
+  syncPetsFromServer: (data: { pets: Pet[]; activePetId: string }) => void;
 }
 
 // ============================================
@@ -303,6 +323,8 @@ const DEFAULT_CHARACTER: CharacterState = {
   highestClearedStage: 0,
   inventory: [],
   serverEquipment: { weapon: null, armor: null, accessory: null },
+  pets: [],
+  activePetId: "",
 };
 
 // ============================================
@@ -352,6 +374,8 @@ export const useCharacterStore = create<CharacterStore>()(
             highestClearedStage: 0,
             inventory: [],
             serverEquipment: { weapon: null, armor: null, accessory: null },
+            pets: [],
+            activePetId: "",
           },
         });
       },
@@ -623,6 +647,24 @@ export const useCharacterStore = create<CharacterStore>()(
           itemCount: data.inventory.length,
           equipment: data.equipment,
           gold: data.gold,
+        });
+      },
+
+      // ✅ Sync pets from server
+      syncPetsFromServer: (data) => {
+        const { character } = get();
+
+        set({
+          character: {
+            ...character,
+            pets: data.pets,
+            activePetId: data.activePetId,
+          },
+        });
+
+        console.log("🐾 Pets synced from server:", {
+          petCount: data.pets.length,
+          activePetId: data.activePetId,
         });
       },
     }),

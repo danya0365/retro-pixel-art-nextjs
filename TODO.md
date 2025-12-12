@@ -386,18 +386,64 @@ retro-pixel-art-nextjs/
 
 ### 2.5 🎒 Inventory & Items
 
-- [ ] **ปรับปรุง Inventory System**
+- [x] **ปรับปรุง Inventory System** ✅
 
-  - [ ] Item categories (Consumable, Equipment, Material, Key Item)
-  - [ ] Item stacking
-  - [ ] Use item in/out of battle
+  - [x] Item categories (Consumable, Equipment, Material, Key Item, Seed, Food, Tool, Furniture, Pet)
+  - [x] Item stacking
+  - [x] Use item in/out of battle
   - [ ] Sell items
 
-- [ ] **สร้าง Item Database** (`src/domain/data/items.ts`)
-  - [ ] Potions (HP/MP recovery)
-  - [ ] Weapons (Sword, Axe, Staff)
-  - [ ] Armor (Helmet, Chest, Boots)
-  - [ ] Materials (Wood, Stone, Iron)
+- [x] **สร้าง Item Database** (`src/domain/data/items.ts`) ✅
+  - [x] Potions (HP/MP recovery)
+  - [x] Weapons (Sword, Axe, Staff)
+  - [x] Armor (Helmet, Chest, Boots)
+  - [x] Materials (Wood, Stone, Iron)
+  - [x] Seeds (Carrot, Tomato, Corn, Potato, Strawberry, Pumpkin)
+  - [x] Food & Drinks (Bread, Cheese, Meat, Fish, Water, Juice)
+  - [x] Tools (Axe, Pickaxe, Fishing Rod, Watering Can, Hoe)
+  - [x] Furniture (Chair, Table, Bed, Lamp, Bookshelf)
+  - [x] Pets (Cat, Dog, Rabbit, Bird, Fish)
+
+### 2.5.1 🏪 Shop System
+
+- [x] **สร้าง ShopPanel** (`src/presentation/components/game/ShopPanel.tsx`) ✅
+  - [x] 10 ประเภทร้าน (Weapons, Armor, Accessories, Farming, Potions, Food, Tools, Furniture, Chests, Pets)
+  - [x] Category sidebar navigation
+  - [x] Item cards with price and quantity
+  - [x] Buy functionality with gold check
+
+### 2.5.2 🐾 Pet System
+
+- [x] **Server: PetSchema** (`realtime-server/src/rooms/schema/GardenState.ts`) ✅
+
+  - [x] petId, name, happiness, hunger, energy
+  - [x] level, exp, adoptedAt
+  - [x] lastFedAt, lastPlayedAt
+
+- [x] **Server: Pet Handlers** (`realtime-server/src/rooms/GardenRoom.ts`) ✅
+
+  - [x] adopt_pet - รับเลี้ยงจาก inventory
+  - [x] feed_pet - ให้อาหาร (+hunger, +happiness)
+  - [x] play_with_pet - เล่นด้วย (+happiness, +exp)
+  - [x] set_active_pet - ตั้งสัตว์เลี้ยงตามตัว
+  - [x] rename_pet - เปลี่ยนชื่อ
+
+- [x] **Client: GameClient methods** ✅
+
+  - [x] adoptPet, feedPet, playWithPet, setActivePet, renamePet
+
+- [x] **Client: PetPanel** (`src/presentation/components/game/PetPanel.tsx`) ✅
+
+  - [x] แสดงรายการสัตว์เลี้ยง (max 5)
+  - [x] Status bars (happiness, hunger, energy)
+  - [x] Actions (feed, play, set active, rename)
+  - [x] Adopt modal เมื่อมี pet ใน inventory
+
+- [ ] **Future: Pet Features**
+  - [ ] Pet ตามตัวละครใน 3D mode
+  - [ ] Pet bonuses (เพิ่ม stats ให้ตัวละคร)
+  - [ ] Pet evolution/growth
+  - [ ] Pet skills in battle
 
 ### 2.6 📜 Quest System
 

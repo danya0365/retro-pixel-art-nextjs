@@ -3,6 +3,7 @@ import {
   GardenPlayer,
   GardenState,
   InventoryItemSchema,
+  PetSchema,
   PlantedItem,
   WorldObject,
 } from "./schema/GardenState";
@@ -166,6 +167,36 @@ export class GardenRoom extends Room<GardenState> {
     this.onMessage("use_consumable", (client, message: { itemId: string }) => {
       this.handleUseConsumable(client, message);
     });
+
+    // Pet messages
+    this.onMessage(
+      "adopt_pet",
+      (client, message: { petId: string; name: string }) => {
+        this.handleAdoptPet(client, message);
+      }
+    );
+
+    this.onMessage("feed_pet", (client, message: { petIndex: number }) => {
+      this.handleFeedPet(client, message);
+    });
+
+    this.onMessage("play_with_pet", (client, message: { petIndex: number }) => {
+      this.handlePlayWithPet(client, message);
+    });
+
+    this.onMessage(
+      "set_active_pet",
+      (client, message: { petIndex: number }) => {
+        this.handleSetActivePet(client, message);
+      }
+    );
+
+    this.onMessage(
+      "rename_pet",
+      (client, message: { petIndex: number; name: string }) => {
+        this.handleRenamePet(client, message);
+      }
+    );
 
     // Start game loop
     this.startGameLoop();
@@ -765,15 +796,73 @@ export class GardenRoom extends Room<GardenState> {
     );
     if (!player) return;
 
-    // Item prices (simplified - should be from master data)
+    // Item prices - all buyable items
     const ITEM_PRICES: Record<string, number> = {
+      // Chests
       chest_bronze: 100,
       chest_silver: 500,
       chest_gold: 2000,
       chest_legendary: 10000,
+      // Potions
       potion_hp_small: 25,
       potion_hp_medium: 80,
+      potion_hp_large: 200,
       potion_mp_small: 30,
+      potion_mp_medium: 100,
+      potion_stamina: 40,
+      // Weapons
+      weapon_wooden_sword: 50,
+      weapon_iron_sword: 200,
+      weapon_steel_sword: 800,
+      weapon_magic_staff: 600,
+      weapon_flame_sword: 2500,
+      weapon_ice_staff: 2500,
+      // Armor
+      armor_cloth: 30,
+      armor_leather: 150,
+      armor_chainmail: 500,
+      armor_plate: 1500,
+      // Accessories
+      acc_wooden_ring: 80,
+      acc_power_ring: 400,
+      acc_speed_boots: 600,
+      acc_magic_amulet: 1000,
+      // Seeds & Farming
+      seed_carrot: 10,
+      seed_tomato: 15,
+      seed_corn: 20,
+      seed_potato: 12,
+      seed_strawberry: 25,
+      seed_pumpkin: 30,
+      fertilizer_basic: 50,
+      fertilizer_super: 150,
+      // Food & Drinks
+      food_bread: 15,
+      food_cheese: 25,
+      food_meat: 50,
+      food_fish: 40,
+      food_salad: 30,
+      drink_water: 5,
+      drink_juice: 20,
+      drink_milk: 15,
+      // Tools
+      tool_axe: 100,
+      tool_pickaxe: 120,
+      tool_fishing_rod: 80,
+      tool_watering_can: 60,
+      tool_hoe: 70,
+      // Furniture
+      furniture_chair: 150,
+      furniture_table: 200,
+      furniture_bed: 500,
+      furniture_lamp: 80,
+      furniture_bookshelf: 300,
+      // Pets
+      pet_cat: 500,
+      pet_dog: 500,
+      pet_rabbit: 300,
+      pet_bird: 200,
+      pet_fish: 100,
     };
 
     const price = ITEM_PRICES[message.itemId];
@@ -1002,6 +1091,256 @@ export class GardenRoom extends Room<GardenState> {
         accessory: player.equipment.accessory || null,
       },
       gold: player.gold,
+    });
+  }
+
+  // ============================================
+  // Pet System Methods
+  // ============================================
+
+  /**
+   * Handle adopt pet - ซื้อ pet จาก inventory แล้วเพิ่มเป็นสัตว์เลี้ยง
+   */
+  private handleAdoptPet(
+    client: Client,
+    message: { petId: string; name: string }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Check if player has pet item in inventory
+    const petItem = player.inventory.find((i) => i.itemId === message.petId);
+    if (!petItem || petItem.quantity < 1) {
+      client.send("error", { message: "ไม่มีสัตว์เลี้ยงนี้ในกระเป๋า" });
+      return;
+    }
+
+    // Check max pets limit (5)
+    if (player.pets.length >= 5) {
+      client.send("error", { message: "คุณมีสัตว์เลี้ยงครบ 5 ตัวแล้ว" });
+      return;
+    }
+
+    // Remove pet item from inventory
+    this.removeItemFromInventory(player, message.petId, 1);
+
+    // Create new pet
+    const newPet = new PetSchema();
+    newPet.petId = message.petId;
+    newPet.name = message.name || this.getDefaultPetName(message.petId);
+    newPet.happiness = 100;
+    newPet.hunger = 100;
+    newPet.energy = 100;
+    newPet.level = 1;
+    newPet.exp = 0;
+    newPet.adoptedAt = Date.now();
+    newPet.lastFedAt = Date.now();
+    newPet.lastPlayedAt = Date.now();
+
+    player.pets.push(newPet);
+
+    // If first pet, set as active
+    if (player.pets.length === 1) {
+      player.activePetId = message.petId;
+    }
+
+    // Send update
+    this.sendPetUpdate(client, player);
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `🐾 ${player.nickname} adopted ${newPet.name} (${message.petId})`
+    );
+  }
+
+  /**
+   * Handle feed pet - ให้อาหารสัตว์เลี้ยง
+   */
+  private handleFeedPet(client: Client, message: { petIndex: number }) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    const pet = player.pets[message.petIndex];
+    if (!pet) {
+      client.send("error", { message: "ไม่พบสัตว์เลี้ยง" });
+      return;
+    }
+
+    // Check if player has food
+    const foodItems = ["food_meat", "food_fish", "food_bread"];
+    let foodUsed = null;
+    for (const foodId of foodItems) {
+      const food = player.inventory.find((i) => i.itemId === foodId);
+      if (food && food.quantity > 0) {
+        foodUsed = foodId;
+        break;
+      }
+    }
+
+    if (!foodUsed) {
+      client.send("error", { message: "ไม่มีอาหารในกระเป๋า" });
+      return;
+    }
+
+    // Remove food from inventory
+    this.removeItemFromInventory(player, foodUsed, 1);
+
+    // Update pet stats
+    pet.hunger = Math.min(100, pet.hunger + 30);
+    pet.happiness = Math.min(100, pet.happiness + 10);
+    pet.lastFedAt = Date.now();
+
+    // Give exp
+    pet.exp += 5;
+    this.checkPetLevelUp(pet);
+
+    // Send update
+    this.sendPetUpdate(client, player);
+    this.sendInventoryUpdate(client, player);
+
+    console.log(`🍖 ${player.nickname} fed ${pet.name}`);
+  }
+
+  /**
+   * Handle play with pet - เล่นกับสัตว์เลี้ยง
+   */
+  private handlePlayWithPet(client: Client, message: { petIndex: number }) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    const pet = player.pets[message.petIndex];
+    if (!pet) {
+      client.send("error", { message: "ไม่พบสัตว์เลี้ยง" });
+      return;
+    }
+
+    // Check cooldown (5 minutes)
+    const cooldown = 5 * 60 * 1000;
+    if (Date.now() - pet.lastPlayedAt < cooldown) {
+      const remaining = Math.ceil(
+        (cooldown - (Date.now() - pet.lastPlayedAt)) / 1000
+      );
+      client.send("error", { message: `รออีก ${remaining} วินาที` });
+      return;
+    }
+
+    // Update pet stats
+    pet.happiness = Math.min(100, pet.happiness + 20);
+    pet.energy = Math.max(0, pet.energy - 10);
+    pet.lastPlayedAt = Date.now();
+
+    // Give exp
+    pet.exp += 10;
+    this.checkPetLevelUp(pet);
+
+    // Send update
+    this.sendPetUpdate(client, player);
+
+    console.log(`🎾 ${player.nickname} played with ${pet.name}`);
+  }
+
+  /**
+   * Handle set active pet - ตั้งสัตว์เลี้ยงที่ตามตัว
+   */
+  private handleSetActivePet(client: Client, message: { petIndex: number }) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    const pet = player.pets[message.petIndex];
+    if (!pet) {
+      client.send("error", { message: "ไม่พบสัตว์เลี้ยง" });
+      return;
+    }
+
+    player.activePetId = pet.petId;
+
+    // Send update
+    this.sendPetUpdate(client, player);
+
+    console.log(`🐾 ${player.nickname} set active pet: ${pet.name}`);
+  }
+
+  /**
+   * Handle rename pet - เปลี่ยนชื่อสัตว์เลี้ยง
+   */
+  private handleRenamePet(
+    client: Client,
+    message: { petIndex: number; name: string }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    const pet = player.pets[message.petIndex];
+    if (!pet) {
+      client.send("error", { message: "ไม่พบสัตว์เลี้ยง" });
+      return;
+    }
+
+    const oldName = pet.name;
+    pet.name = message.name.slice(0, 20); // Max 20 chars
+
+    // Send update
+    this.sendPetUpdate(client, player);
+
+    console.log(`✏️ ${player.nickname} renamed pet: ${oldName} -> ${pet.name}`);
+  }
+
+  /**
+   * Get default pet name based on type
+   */
+  private getDefaultPetName(petId: string): string {
+    const names: Record<string, string> = {
+      pet_cat: "มิ้วมิ้ว",
+      pet_dog: "บั๊ดดี้",
+      pet_rabbit: "บันนี่",
+      pet_bird: "ทวีตี้",
+      pet_fish: "นีโม่",
+    };
+    return names[petId] || "สัตว์เลี้ยง";
+  }
+
+  /**
+   * Check pet level up
+   */
+  private checkPetLevelUp(pet: PetSchema) {
+    const expRequired = pet.level * 50;
+    if (pet.exp >= expRequired) {
+      pet.exp -= expRequired;
+      pet.level++;
+      console.log(`🎉 Pet ${pet.name} leveled up to ${pet.level}!`);
+    }
+  }
+
+  /**
+   * Send pet update to client
+   */
+  private sendPetUpdate(client: Client, player: GardenPlayer) {
+    const pets = player.pets.map((p) => ({
+      petId: p.petId,
+      name: p.name,
+      happiness: p.happiness,
+      hunger: p.hunger,
+      energy: p.energy,
+      level: p.level,
+      exp: p.exp,
+      adoptedAt: p.adoptedAt,
+      lastFedAt: p.lastFedAt,
+      lastPlayedAt: p.lastPlayedAt,
+    }));
+
+    client.send("pets_synced", {
+      pets,
+      activePetId: player.activePetId,
     });
   }
 }
