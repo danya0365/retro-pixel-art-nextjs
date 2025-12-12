@@ -602,8 +602,14 @@ export class GardenRoom extends Room<GardenState> {
     player.exp += message.rewards.exp;
     player.gold += message.rewards.gold;
 
-    if (message.leveledUp && message.newLevel) {
-      player.level = message.newLevel;
+    // Check for level up (simple calculation)
+    const expToNextLevel = player.expToNextLevel;
+    let didLevelUp = false;
+    while (player.exp >= expToNextLevel && player.level < 99) {
+      player.exp -= expToNextLevel;
+      player.level += 1;
+      player.expToNextLevel = Math.floor(100 * Math.pow(1.5, player.level - 1));
+      didLevelUp = true;
     }
 
     // Update highest cleared stage
@@ -612,7 +618,30 @@ export class GardenRoom extends Room<GardenState> {
     }
 
     console.log(
-      `🏆 ${player.nickname} won ${message.stageName}! +${message.rewards.exp} EXP, +${message.rewards.gold} Gold`
+      `🏆 ${player.nickname} won ${message.stageName}! +${
+        message.rewards.exp
+      } EXP, +${message.rewards.gold} Gold${
+        didLevelUp ? ` (Level Up! → Lv.${player.level})` : ""
+      }`
     );
+
+    // ✅ ส่ง stats ที่ update แล้วกลับไปให้ client sync ลง characterStore
+    client.send("stats_synced", {
+      level: player.level,
+      exp: player.exp,
+      expToNextLevel: player.expToNextLevel,
+      gold: player.gold,
+      hp: player.hp,
+      maxHp: player.maxHp,
+      mp: player.mp,
+      maxMp: player.maxMp,
+      atk: player.atk,
+      def: player.def,
+      agi: player.agi,
+      wis: player.wis,
+      mov: player.mov,
+      rng: player.rng,
+      highestClearedStage: player.highestClearedStage,
+    });
   }
 }

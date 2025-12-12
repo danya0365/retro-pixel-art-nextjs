@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useCharacter,
-  useCharacterStore,
-} from "@/src/presentation/stores/characterStore";
-import { useUser } from "@/src/presentation/stores/userStore";
-import { useEffect, useState } from "react";
+import type { GardenPlayer } from "@/src/presentation/hooks/useGardenRoom";
 
 // Stat icons and colors - Dragon Quest Tact Style
 const STAT_CONFIG = {
@@ -29,33 +24,48 @@ const CLASS_ICONS: Record<string, string> = {
 };
 
 interface CharacterPanelProps {
+  player: GardenPlayer | null; // ✅ รับข้อมูลจาก server
   compact?: boolean;
 }
 
-export function CharacterPanel({ compact = false }: CharacterPanelProps) {
-  const character = useCharacter();
-  const user = useUser();
-  const initializeCharacter = useCharacterStore(
-    (state) => state.initializeCharacter
-  );
+export function CharacterPanel({
+  player,
+  compact = false,
+}: CharacterPanelProps) {
+  // ✅ ใช้ข้อมูลจาก server (Single Source of Truth)
+  if (!player) {
+    return (
+      <div className="retro-window">
+        <div className="retro-window-titlebar">
+          <span className="retro-window-title">👤 Loading...</span>
+        </div>
+        <div className="retro-window-content p-3 text-center text-xs">
+          กำลังโหลดข้อมูลตัวละคร...
+        </div>
+      </div>
+    );
+  }
 
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialize character with user's name on first load
-  useEffect(() => {
-    if (user && !isInitialized) {
-      // Only initialize if character name doesn't match user
-      if (character.name === "Adventurer" && user.nickname) {
-        initializeCharacter(user.nickname, "Farmer", user.avatar || "👨‍🌾");
-      }
-      setIsInitialized(true);
-    }
-  }, [user, character.name, initializeCharacter, isInitialized]);
-
-  const { totalStats, equipment, gold } = character;
-  const hpPercent = (totalStats.hp / totalStats.maxHp) * 100;
-  const mpPercent = (totalStats.mp / totalStats.maxMp) * 100;
-  const expPercent = (totalStats.exp / totalStats.expToNextLevel) * 100;
+  // Map server player data to display format
+  const stats = {
+    level: player.level,
+    exp: player.exp,
+    expToNextLevel: player.expToNextLevel,
+    hp: player.hp,
+    maxHp: player.maxHp,
+    mp: player.mp,
+    maxMp: player.maxMp,
+    atk: player.atk,
+    def: player.def,
+    agi: player.agi,
+    wis: player.wis,
+    mov: player.mov,
+    rng: player.rng,
+  };
+  const gold = player.gold;
+  const hpPercent = (stats.hp / stats.maxHp) * 100;
+  const mpPercent = (stats.mp / stats.maxMp) * 100;
+  const expPercent = (stats.exp / stats.expToNextLevel) * 100;
 
   // HP bar color based on percentage
   const hpColor =
@@ -70,7 +80,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
       <div className="retro-window">
         <div className="retro-window-titlebar">
           <span className="retro-window-title">
-            {character.avatar} {character.name}
+            {player.avatar} {player.nickname}
           </span>
         </div>
         <div className="retro-window-content p-2 text-xs">
@@ -85,7 +95,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
                 />
               </div>
               <span className="w-16 text-right">
-                {totalStats.hp}/{totalStats.maxHp}
+                {stats.hp}/{stats.maxHp}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -97,13 +107,13 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
                 />
               </div>
               <span className="w-16 text-right">
-                {totalStats.mp}/{totalStats.maxMp}
+                {stats.mp}/{stats.maxMp}
               </span>
             </div>
           </div>
           {/* Quick Stats */}
           <div className="flex justify-between mt-2 pt-2 border-t border-gray-300">
-            <span>Lv.{totalStats.level}</span>
+            <span>Lv.{stats.level}</span>
             <span>💰 {gold}G</span>
           </div>
         </div>
@@ -115,7 +125,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
     <div className="retro-window">
       <div className="retro-window-titlebar">
         <span className="retro-window-title">
-          👤 Character Status - {character.name}
+          👤 Character Status - {player.nickname}
         </span>
       </div>
       <div className="retro-window-content p-3">
@@ -123,29 +133,28 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
         <div className="flex gap-4 pb-3 border-b-2 border-gray-400">
           {/* Avatar */}
           <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-gray-400 flex items-center justify-center text-3xl">
-            {character.avatar}
+            {player.avatar}
           </div>
 
           {/* Basic Info */}
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-sm">{character.name}</span>
+              <span className="font-bold text-sm">{player.nickname}</span>
               <span className="text-xs bg-blue-100 px-1 border border-blue-300">
-                {CLASS_ICONS[character.class]} {character.class}
+                {CLASS_ICONS[player.characterClass] || "👨‍🌾"}{" "}
+                {player.characterClass}
               </span>
             </div>
             <div className="text-xs mt-1">
               Level{" "}
-              <span className="font-bold text-blue-600">
-                {totalStats.level}
-              </span>
+              <span className="font-bold text-blue-600">{stats.level}</span>
             </div>
             {/* EXP Bar */}
             <div className="mt-1">
               <div className="flex justify-between text-xs text-gray-500">
                 <span>EXP</span>
                 <span>
-                  {totalStats.exp}/{totalStats.expToNextLevel}
+                  {stats.exp}/{stats.expToNextLevel}
                 </span>
               </div>
               <div className="h-2 bg-gray-300 border border-gray-400">
@@ -166,7 +175,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-bold text-red-600">❤️ HP</span>
                 <span>
-                  {totalStats.hp}/{totalStats.maxHp}
+                  {stats.hp}/{stats.maxHp}
                 </span>
               </div>
               <div className="h-4 bg-gray-300 border-2 border-gray-400">
@@ -182,7 +191,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-bold text-blue-600">💙 MP</span>
                 <span>
-                  {totalStats.mp}/{totalStats.maxMp}
+                  {stats.mp}/{stats.maxMp}
                 </span>
               </div>
               <div className="h-4 bg-gray-300 border-2 border-gray-400">
@@ -198,7 +207,7 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
         {/* Stats Grid */}
         <div className="py-3 border-b-2 border-gray-400">
           <div className="text-xs font-bold mb-2">📊 Stats</div>
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-6 gap-1">
             {(Object.keys(STAT_CONFIG) as Array<keyof typeof STAT_CONFIG>).map(
               (stat) => (
                 <div
@@ -212,43 +221,10 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
                   >
                     {STAT_CONFIG[stat].name}
                   </div>
-                  <div className="text-sm font-bold">{totalStats[stat]}</div>
+                  <div className="text-sm font-bold">{stats[stat]}</div>
                 </div>
               )
             )}
-          </div>
-        </div>
-
-        {/* Equipment */}
-        <div className="py-3 border-b-2 border-gray-400">
-          <div className="text-xs font-bold mb-2">🎒 Equipment</div>
-          <div className="grid grid-cols-3 gap-2">
-            {/* Weapon */}
-            <div className="p-2 bg-gray-100 border border-gray-300 text-center">
-              <div className="text-xs text-gray-500">Weapon</div>
-              <div className="text-xl">{equipment.weapon?.icon || "⚪"}</div>
-              <div className="text-xs truncate">
-                {equipment.weapon?.name || "Empty"}
-              </div>
-            </div>
-
-            {/* Armor */}
-            <div className="p-2 bg-gray-100 border border-gray-300 text-center">
-              <div className="text-xs text-gray-500">Armor</div>
-              <div className="text-xl">{equipment.armor?.icon || "⚪"}</div>
-              <div className="text-xs truncate">
-                {equipment.armor?.name || "Empty"}
-              </div>
-            </div>
-
-            {/* Accessory */}
-            <div className="p-2 bg-gray-100 border border-gray-300 text-center">
-              <div className="text-xs text-gray-500">Accessory</div>
-              <div className="text-xl">{equipment.accessory?.icon || "⚪"}</div>
-              <div className="text-xs truncate">
-                {equipment.accessory?.name || "Empty"}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -264,12 +240,18 @@ export function CharacterPanel({ compact = false }: CharacterPanelProps) {
   );
 }
 
-// Mini version for HUD
-export function CharacterMiniStatus() {
-  const character = useCharacter();
-  const { totalStats, gold } = character;
-  const hpPercent = (totalStats.hp / totalStats.maxHp) * 100;
-  const mpPercent = (totalStats.mp / totalStats.maxMp) * 100;
+// Mini version for HUD - ✅ Server as Single Source of Truth
+interface CharacterMiniStatusProps {
+  player: GardenPlayer | null;
+}
+
+export function CharacterMiniStatus({ player }: CharacterMiniStatusProps) {
+  if (!player) {
+    return <div className="text-xs">Loading...</div>;
+  }
+
+  const hpPercent = (player.hp / player.maxHp) * 100;
+  const mpPercent = (player.mp / player.maxMp) * 100;
 
   const hpColor =
     hpPercent > 50
@@ -280,7 +262,7 @@ export function CharacterMiniStatus() {
 
   return (
     <div className="flex items-center gap-3 text-xs">
-      <span className="font-bold">Lv.{totalStats.level}</span>
+      <span className="font-bold">Lv.{player.level}</span>
       <div className="flex items-center gap-1">
         <span>❤️</span>
         <div className="w-20 h-2 bg-gray-300 border border-gray-400">
@@ -289,7 +271,7 @@ export function CharacterMiniStatus() {
             style={{ width: `${hpPercent}%` }}
           />
         </div>
-        <span className="w-10">{totalStats.hp}</span>
+        <span className="w-10">{player.hp}</span>
       </div>
       <div className="flex items-center gap-1">
         <span>💙</span>
@@ -299,9 +281,9 @@ export function CharacterMiniStatus() {
             style={{ width: `${mpPercent}%` }}
           />
         </div>
-        <span className="w-8">{totalStats.mp}</span>
+        <span className="w-8">{player.mp}</span>
       </div>
-      <span className="text-yellow-600">💰{gold}</span>
+      <span className="text-yellow-600">💰{player.gold}</span>
     </div>
   );
 }

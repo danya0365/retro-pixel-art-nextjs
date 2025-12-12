@@ -2,15 +2,16 @@
 
 import { MONSTERS, type BattleStage } from "@/src/domain/data/monsters";
 import { gameClient } from "@/src/infrastructure/colyseus/GameClient";
+import type { GardenPlayer } from "@/src/presentation/hooks/useGardenRoom";
 import {
   useBattleStore,
   type BattleUnit,
 } from "@/src/presentation/stores/battleStore";
-import { useCharacterStore } from "@/src/presentation/stores/characterStore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface BattleViewProps {
   stage: BattleStage;
+  player: GardenPlayer | null; // ✅ Server as Single Source of Truth
   onExit: () => void;
   onVictory?: (rewards: { exp: number; gold: number }) => void;
 }
@@ -168,7 +169,7 @@ function BattleLogPanel() {
   const battleLogs = useBattleStore((s) => s.battleLogs);
 
   return (
-    <div className="h-full overflow-y-auto text-xs space-y-0.5 p-1 bg-black text-green-400 font-mono">
+    <div className="h-full overflow-y-auto text-xs space-y-0.5 p-1 font-mono">
       {battleLogs.slice(-20).map((log) => (
         <div key={log.id} className="leading-tight">
           <span className="text-gray-500">[T{log.turn}]</span> {log.message}
@@ -195,14 +196,11 @@ function VictoryResultScreen({
   onVictory,
 }: VictoryResultScreenProps) {
   const [currentStep, setCurrentStep] = useState<ResultStep>("victory");
-  const [levelUpInfo, setLevelUpInfo] = useState<{
-    didLevelUp: boolean;
-    newLevel: number;
-    oldLevel: number;
-  } | null>(null);
   const [hasAppliedRewards, setHasAppliedRewards] = useState(false);
+  // Note: Level up ถูกคำนวณบน server แล้ว - ไม่ต้องแสดง level up step บน client
 
-  const { gainExp, addGold, character } = useCharacterStore();
+  // ✅ Server as Single Source of Truth - ไม่ใช้ local store อีกต่อไป
+  // EXP/Gold จะถูก update บน server เมื่อเรียก gameClient.reportBattleVictory()
 
   // Calculate dropped items from monsters
   const droppedItems = useMemo<DroppedItem[]>(() => {
@@ -230,23 +228,13 @@ function VictoryResultScreen({
     return items;
   }, [stage.monsters]);
 
-  // Apply rewards when reaching exp step
+  // ✅ Server as Single Source of Truth
+  // เมื่อถึง step "exp" → ส่งผลการต่อสู้ไป server → server จะ update stats ให้
   useEffect(() => {
     if (currentStep === "exp" && rewards && !hasAppliedRewards) {
-      const oldLevel = character.baseStats.level;
-      const result = gainExp(rewards.exp);
-      addGold(rewards.gold);
       setHasAppliedRewards(true);
 
-      if (result.leveledUp) {
-        setLevelUpInfo({
-          didLevelUp: true,
-          newLevel: result.newLevel,
-          oldLevel: oldLevel,
-        });
-      }
-
-      // Sync to game server
+      // ส่งผลการต่อสู้ไป server - server จะ update EXP/Gold/Level
       if (gameClient.isConnected()) {
         gameClient.reportBattleVictory({
           stageId: stage.id,
@@ -255,10 +243,10 @@ function VictoryResultScreen({
             exp: rewards.exp,
             gold: rewards.gold,
           },
-          leveledUp: result.leveledUp,
-          newLevel: result.leveledUp ? result.newLevel : undefined,
+          leveledUp: false, // Server จะคำนวณเอง
+          newLevel: undefined,
         });
-        console.log("📡 Battle result synced to server");
+        console.log("📡 Battle result sent to server");
       }
 
       // Notify parent of victory
@@ -270,9 +258,6 @@ function VictoryResultScreen({
     currentStep,
     rewards,
     hasAppliedRewards,
-    gainExp,
-    addGold,
-    character.baseStats.level,
     onVictory,
     stage.id,
     stage.name,
@@ -284,13 +269,7 @@ function VictoryResultScreen({
         setCurrentStep("exp");
         break;
       case "exp":
-        if (levelUpInfo?.didLevelUp) {
-          setCurrentStep("levelup");
-        } else {
-          setCurrentStep("gold");
-        }
-        break;
-      case "levelup":
+        // ✅ Server จะคำนวณ level up เอง - ข้ามไป gold เลย
         setCurrentStep("gold");
         break;
       case "gold":
@@ -353,32 +332,12 @@ function VictoryResultScreen({
                 </div>
               </div>
               <div className="mt-2 text-xs text-gray-500">
-                EXP รวม: {character.totalStats.exp}/
-                {character.totalStats.expToNextLevel}
+                (EXP จะถูก update บน server)
               </div>
             </>
           )}
 
-          {/* Level Up Step */}
-          {currentStep === "levelup" && levelUpInfo && (
-            <>
-              <div className="text-6xl mb-4 animate-pulse">🆙</div>
-              <h2 className="text-xl font-bold mb-2 text-yellow-600">
-                Level Up!
-              </h2>
-              <div className="bg-yellow-100 border-2 border-yellow-400 p-4 rounded-lg">
-                <div className="text-2xl">
-                  Lv.{levelUpInfo.oldLevel} →{" "}
-                  <span className="text-3xl font-bold text-yellow-600">
-                    Lv.{levelUpInfo.newLevel}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 text-xs text-gray-600">
-                🎊 ยินดีด้วย! พลังเพิ่มขึ้น!
-              </div>
-            </>
-          )}
+          {/* Level Up - ถูกคำนวณบน server แล้ว */}
 
           {/* Gold Step */}
           {currentStep === "gold" && rewards && (
@@ -391,7 +350,7 @@ function VictoryResultScreen({
                 </div>
               </div>
               <div className="mt-2 text-xs text-gray-500">
-                Gold รวม: {character.gold}
+                (Gold จะถูก update บน server)
               </div>
             </>
           )}
@@ -448,14 +407,6 @@ function VictoryResultScreen({
                     +{rewards.gold}
                   </span>
                 </div>
-                {levelUpInfo?.didLevelUp && (
-                  <div className="flex justify-between">
-                    <span>Level Up:</span>
-                    <span className="font-bold text-yellow-600">
-                      Lv.{levelUpInfo.oldLevel} → Lv.{levelUpInfo.newLevel}
-                    </span>
-                  </div>
-                )}
                 {droppedItems.length > 0 && (
                   <div className="flex justify-between">
                     <span>Items:</span>
@@ -469,22 +420,10 @@ function VictoryResultScreen({
           )}
         </div>
 
-        {/* Progress Dots */}
+        {/* Progress Dots - ไม่มี levelup step เพราะ server คำนวณเอง */}
         <div className="flex justify-center gap-2 my-4">
-          {(
-            [
-              "victory",
-              "exp",
-              "levelup",
-              "gold",
-              "items",
-              "done",
-            ] as ResultStep[]
-          )
+          {(["victory", "exp", "gold", "items", "done"] as ResultStep[])
             .filter((step) => {
-              // Hide levelup if no level up
-              if (step === "levelup" && !levelUpInfo?.didLevelUp) return false;
-              // Hide items if no drops
               if (step === "items" && droppedItems.length === 0) return false;
               return true;
             })
@@ -499,15 +438,12 @@ function VictoryResultScreen({
                         [
                           "victory",
                           "exp",
-                          "levelup",
                           "gold",
                           "items",
                           "done",
                         ] as ResultStep[]
                       )
                         .filter((s) => {
-                          if (s === "levelup" && !levelUpInfo?.didLevelUp)
-                            return false;
                           if (s === "items" && droppedItems.length === 0)
                             return false;
                           return true;
@@ -537,8 +473,13 @@ function VictoryResultScreen({
 // ============================================
 // Main Battle View Component
 // ============================================
-export function BattleView({ stage, onExit, onVictory }: BattleViewProps) {
-  const character = useCharacterStore((s) => s.character);
+export function BattleView({
+  stage,
+  player,
+  onExit,
+  onVictory,
+}: BattleViewProps) {
+  // ✅ ใช้ player จาก server แทน characterStore
 
   const {
     phase,
@@ -560,27 +501,26 @@ export function BattleView({ stage, onExit, onVictory }: BattleViewProps) {
 
   const currentUnit = getCurrentUnit();
 
-  // Initialize battle on mount
+  // Initialize battle on mount - ✅ ใช้ข้อมูลจาก server
   useEffect(() => {
-    if (!character) return;
+    if (!player) return;
 
-    const stats = character.totalStats;
     const playerUnit: BattleUnit = {
       id: "player",
-      name: character.name,
+      name: player.nickname,
       icon: "🦸",
       position: { x: 1, y: 3 },
-      currentHp: stats.hp,
-      maxHp: stats.maxHp,
-      currentMp: stats.mp,
-      maxMp: stats.maxMp,
+      currentHp: player.hp,
+      maxHp: player.maxHp,
+      currentMp: player.mp,
+      maxMp: player.maxMp,
       stats: {
-        atk: stats.atk,
-        def: stats.def,
-        agi: stats.agi,
-        wis: stats.wis,
-        mov: stats.mov,
-        rng: stats.rng,
+        atk: player.atk,
+        def: player.def,
+        agi: player.agi,
+        wis: player.wis,
+        mov: player.mov,
+        rng: player.rng,
       },
       isAlly: true,
       hasActed: false,

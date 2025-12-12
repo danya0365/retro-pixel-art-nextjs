@@ -220,6 +220,10 @@ interface CharacterStore {
   addGold: (amount: number) => void;
   spendGold: (amount: number) => boolean;
   learnSkill: (skillId: string) => void;
+  // ✅ Sync stats from server (Single Source of Truth)
+  syncStatsFromServer: (
+    stats: Partial<CharacterStats> & { gold?: number }
+  ) => void;
 }
 
 // ============================================
@@ -520,6 +524,44 @@ export const useCharacterStore = create<CharacterStore>()(
             ...character,
             skills: [...character.skills, skillId],
           },
+        });
+      },
+
+      // ✅ Sync stats from server (Single Source of Truth)
+      syncStatsFromServer: (stats) => {
+        const { character } = get();
+        const newBaseStats = { ...character.baseStats };
+        const newGold = stats.gold ?? character.gold;
+
+        // Update stats from server
+        if (stats.level !== undefined) newBaseStats.level = stats.level;
+        if (stats.exp !== undefined) newBaseStats.exp = stats.exp;
+        if (stats.expToNextLevel !== undefined)
+          newBaseStats.expToNextLevel = stats.expToNextLevel;
+        if (stats.hp !== undefined) newBaseStats.hp = stats.hp;
+        if (stats.maxHp !== undefined) newBaseStats.maxHp = stats.maxHp;
+        if (stats.mp !== undefined) newBaseStats.mp = stats.mp;
+        if (stats.maxMp !== undefined) newBaseStats.maxMp = stats.maxMp;
+        if (stats.atk !== undefined) newBaseStats.atk = stats.atk;
+        if (stats.def !== undefined) newBaseStats.def = stats.def;
+        if (stats.agi !== undefined) newBaseStats.agi = stats.agi;
+        if (stats.wis !== undefined) newBaseStats.wis = stats.wis;
+        if (stats.mov !== undefined) newBaseStats.mov = stats.mov;
+        if (stats.rng !== undefined) newBaseStats.rng = stats.rng;
+
+        set({
+          character: {
+            ...character,
+            baseStats: newBaseStats,
+            totalStats: calculateTotalStats(newBaseStats, character.equipment),
+            gold: newGold,
+          },
+        });
+
+        console.log("💾 Character stats synced from server:", {
+          level: newBaseStats.level,
+          exp: newBaseStats.exp,
+          gold: newGold,
         });
       },
     }),

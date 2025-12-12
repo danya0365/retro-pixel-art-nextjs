@@ -82,7 +82,7 @@ export function SimpleGameView({
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<
     "farm" | "inventory" | "players" | "character" | "battle"
-  >("farm");
+  >("players");
   const [logs, setLogs] = useState<string[]>([
     "🎮 ยินดีต้อนรับสู่ Retro Pixel Garden!",
   ]);
@@ -184,8 +184,8 @@ export function SimpleGameView({
               <span>👥 {players.length}</span>
               <span>🌱 {plants.length}</span>
             </div>
-            {/* Character Mini Status */}
-            <CharacterMiniStatus />
+            {/* Character Mini Status - ✅ Server as Single Source of Truth */}
+            <CharacterMiniStatus player={localPlayer || null} />
           </div>
         </div>
       </div>
@@ -197,26 +197,6 @@ export function SimpleGameView({
           <div className="retro-window h-full">
             <div className="retro-window-titlebar">
               <div className="flex gap-1">
-                <button
-                  onClick={() => setActiveTab("farm")}
-                  className={`px-2 py-0.5 text-xs ${
-                    activeTab === "farm"
-                      ? "bg-white"
-                      : "bg-[var(--win98-button-face)]"
-                  }`}
-                >
-                  🌾 ฟาร์ม
-                </button>
-                <button
-                  onClick={() => setActiveTab("inventory")}
-                  className={`px-2 py-0.5 text-xs ${
-                    activeTab === "inventory"
-                      ? "bg-white"
-                      : "bg-[var(--win98-button-face)]"
-                  }`}
-                >
-                  🎒 กระเป๋า
-                </button>
                 <button
                   onClick={() => setActiveTab("players")}
                   className={`px-2 py-0.5 text-xs ${
@@ -238,6 +218,16 @@ export function SimpleGameView({
                   👤 ตัวละคร
                 </button>
                 <button
+                  onClick={() => setActiveTab("inventory")}
+                  className={`px-2 py-0.5 text-xs ${
+                    activeTab === "inventory"
+                      ? "bg-white"
+                      : "bg-[var(--win98-button-face)]"
+                  }`}
+                >
+                  🎒 กระเป๋า
+                </button>
+                <button
                   onClick={() => setActiveTab("battle")}
                   className={`px-2 py-0.5 text-xs ${
                     activeTab === "battle"
@@ -246,6 +236,16 @@ export function SimpleGameView({
                   }`}
                 >
                   ⚔️ ล่ามอนสเตอร์
+                </button>
+                <button
+                  onClick={() => setActiveTab("farm")}
+                  className={`px-2 py-0.5 text-xs ${
+                    activeTab === "farm"
+                      ? "bg-white"
+                      : "bg-[var(--win98-button-face)]"
+                  }`}
+                >
+                  🌾 ฟาร์ม
                 </button>
               </div>
             </div>
@@ -411,7 +411,7 @@ export function SimpleGameView({
 
               {activeTab === "character" && (
                 <div>
-                  <CharacterPanel />
+                  <CharacterPanel player={localPlayer || null} />
                 </div>
               )}
 
@@ -419,18 +419,18 @@ export function SimpleGameView({
                 (currentBattle ? (
                   <BattleView
                     stage={currentBattle}
+                    player={localPlayer || null}
                     onExit={() => {
                       setCurrentBattle(null);
                     }}
                     onVictory={(rewards) => {
-                      // Update highest cleared stage (EXP/Gold already applied by BattleView)
+                      // Update highest cleared stage
                       if (currentBattle.id > highestClearedStage) {
                         setHighestClearedStage(currentBattle.id);
                       }
                       addLog(
                         `🎉 ชนะ ${currentBattle.name}! +${rewards.exp} EXP, +${rewards.gold} Gold`
                       );
-                      // Note: Don't setCurrentBattle(null) here - let onExit handle it
                     }}
                   />
                 ) : (
@@ -486,7 +486,7 @@ export function SimpleGameView({
             <div className="retro-window-titlebar">
               <span className="retro-window-title">📜 Activity Log</span>
             </div>
-            <div className="retro-window-content p-1 h-[200px] overflow-y-auto bg-black text-green-400 font-mono">
+            <div className="retro-window-content p-1 h-[200px] overflow-y-auto font-mono">
               {logs.map((log, i) => (
                 <div
                   key={i}

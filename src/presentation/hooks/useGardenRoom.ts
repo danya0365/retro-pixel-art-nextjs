@@ -283,6 +283,13 @@ export function useGardenRoom({
         setObjects((prev) => prev.filter((o) => o.id !== data.objectId));
       });
 
+      // ✅ รับ stats จาก server แล้ว sync ลง characterStore เพื่อ persist
+      room.onMessage("stats_synced", (data) => {
+        console.log("📥 Stats synced from server:", data);
+        const { syncStatsFromServer } = useCharacterStore.getState();
+        syncStatsFromServer(data);
+      });
+
       // Handle disconnect
       room.onLeave((code) => {
         console.log("👋 Left garden room:", code);
