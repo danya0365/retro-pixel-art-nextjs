@@ -1,6 +1,23 @@
 import { ArraySchema, MapSchema, Schema, type } from "@colyseus/schema";
 
 /**
+ * Inventory Item Schema
+ */
+export class InventoryItemSchema extends Schema {
+  @type("string") itemId: string = "";
+  @type("number") quantity: number = 0;
+}
+
+/**
+ * Equipment Schema
+ */
+export class EquipmentSchema extends Schema {
+  @type("string") weapon: string = ""; // Item ID or empty
+  @type("string") armor: string = "";
+  @type("string") accessory: string = "";
+}
+
+/**
  * Player state in the garden world
  */
 export class GardenPlayer extends Schema {
@@ -42,6 +59,13 @@ export class GardenPlayer extends Schema {
   @type("number") mov: number = 2;
   @type("number") rng: number = 1;
   @type("number") highestClearedStage: number = 0;
+
+  // Equipment (Item IDs equipped)
+  @type(EquipmentSchema) equipment = new EquipmentSchema();
+
+  // Inventory (Array of items with quantity)
+  @type([InventoryItemSchema]) inventory =
+    new ArraySchema<InventoryItemSchema>();
 }
 
 /**

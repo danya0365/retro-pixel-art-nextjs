@@ -69,6 +69,19 @@ export interface EquipmentItem {
   description: string;
 }
 
+// Inventory Item (from server)
+export interface InventoryItem {
+  itemId: string;
+  quantity: number;
+}
+
+// Server Equipment (Item IDs)
+export interface ServerEquipment {
+  weapon: string | null;
+  armor: string | null;
+  accessory: string | null;
+}
+
 export interface CharacterState {
   // Identity
   name: string;
@@ -90,6 +103,10 @@ export interface CharacterState {
 
   // Progress
   highestClearedStage: number;
+
+  // Inventory (synced from server)
+  inventory: InventoryItem[];
+  serverEquipment: ServerEquipment;
 }
 
 // ============================================
@@ -230,6 +247,12 @@ interface CharacterStore {
       highestClearedStage?: number;
     }
   ) => void;
+  // ✅ Sync inventory from server
+  syncInventoryFromServer: (data: {
+    inventory: InventoryItem[];
+    equipment: ServerEquipment;
+    gold: number;
+  }) => void;
 }
 
 // ============================================
@@ -278,6 +301,8 @@ const DEFAULT_CHARACTER: CharacterState = {
   skills: ["basic_attack"],
   gold: 100,
   highestClearedStage: 0,
+  inventory: [],
+  serverEquipment: { weapon: null, armor: null, accessory: null },
 };
 
 // ============================================
@@ -325,6 +350,8 @@ export const useCharacterStore = create<CharacterStore>()(
             skills: ["basic_attack"],
             gold: 100,
             highestClearedStage: 0,
+            inventory: [],
+            serverEquipment: { weapon: null, armor: null, accessory: null },
           },
         });
       },
@@ -576,6 +603,26 @@ export const useCharacterStore = create<CharacterStore>()(
           exp: newBaseStats.exp,
           gold: newGold,
           highestClearedStage: newHighestClearedStage,
+        });
+      },
+
+      // ✅ Sync inventory from server
+      syncInventoryFromServer: (data) => {
+        const { character } = get();
+
+        set({
+          character: {
+            ...character,
+            inventory: data.inventory,
+            serverEquipment: data.equipment,
+            gold: data.gold,
+          },
+        });
+
+        console.log("💾 Inventory synced from server:", {
+          itemCount: data.inventory.length,
+          equipment: data.equipment,
+          gold: data.gold,
         });
       },
     }),

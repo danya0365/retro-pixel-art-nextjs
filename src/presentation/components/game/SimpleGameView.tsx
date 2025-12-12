@@ -10,8 +10,10 @@ import { useHotbarStore } from "@/src/presentation/stores/hotbarStore";
 import { useCallback, useState } from "react";
 import { BattleView } from "./BattleView";
 import { CharacterMiniStatus, CharacterPanel } from "./CharacterPanel";
+import { InventoryPanel } from "./InventoryPanel";
 import { MonsterHunting } from "./MonsterHunting";
 import { PlayerProfileModal } from "./PlayerProfileModal";
+import { ShopPanel } from "./ShopPanel";
 
 interface SimpleGameViewProps {
   user: User;
@@ -81,7 +83,7 @@ export function SimpleGameView({
 }: SimpleGameViewProps) {
   const [selectedPlot, setSelectedPlot] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "farm" | "inventory" | "players" | "character" | "battle"
+    "farm" | "inventory" | "players" | "character" | "battle" | "shop"
   >("players");
   const [logs, setLogs] = useState<string[]>([
     "🎮 ยินดีต้อนรับสู่ Retro Pixel Garden!",
@@ -247,6 +249,16 @@ export function SimpleGameView({
                 >
                   🌾 ฟาร์ม
                 </button>
+                <button
+                  onClick={() => setActiveTab("shop")}
+                  className={`px-2 py-0.5 text-xs ${
+                    activeTab === "shop"
+                      ? "bg-white"
+                      : "bg-[var(--win98-button-face)]"
+                  }`}
+                >
+                  🏪 ร้านค้า
+                </button>
               </div>
             </div>
             <div className="retro-window-content p-2 min-h-[300px]">
@@ -326,51 +338,7 @@ export function SimpleGameView({
                 </div>
               )}
 
-              {activeTab === "inventory" && (
-                <div>
-                  <p className="text-xs mb-2 text-[var(--win98-button-text)]">
-                    เลือกไอเทมเพื่อใช้งาน:
-                  </p>
-                  <div className="grid grid-cols-5 gap-2">
-                    {hotbarItems.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedSlot(i)}
-                        className={`
-                          p-2 border-2 text-center
-                          ${
-                            selectedSlot === i
-                              ? "border-blue-500 bg-blue-100"
-                              : "border-[var(--win98-button-shadow)] bg-[var(--win98-button-face)]"
-                          }
-                        `}
-                      >
-                        <span className="text-2xl block">
-                          {item?.icon || "·"}
-                        </span>
-                        <span className="text-xs block truncate">
-                          {item?.name || "ว่าง"}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 p-2 bg-[var(--win98-button-face)] border border-[var(--win98-button-shadow)]">
-                    <p className="text-xs font-bold mb-1">📖 คู่มือพืช:</p>
-                    <div className="grid grid-cols-2 gap-1 text-xs">
-                      {Object.entries(PLANT_INFO).map(([key, info]) => (
-                        <div key={key} className="flex items-center gap-1">
-                          <span>{info.icon}</span>
-                          <span>{info.name}</span>
-                          <span className="text-gray-500">
-                            ({info.growTime})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {activeTab === "inventory" && <InventoryPanel />}
 
               {activeTab === "players" && (
                 <div>
@@ -439,6 +407,8 @@ export function SimpleGameView({
                     }}
                   />
                 ))}
+
+              {activeTab === "shop" && <ShopPanel />}
             </div>
           </div>
         </div>

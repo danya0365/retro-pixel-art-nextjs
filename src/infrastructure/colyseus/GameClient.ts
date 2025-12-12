@@ -406,6 +406,45 @@ class GameClientManager {
       // Cleanup would go here if needed
     };
   }
+
+  // ============================================
+  // Equipment & Inventory Methods
+  // ============================================
+
+  /**
+   * Equip an item to a slot
+   */
+  equipItem(itemId: string, slot: "weapon" | "armor" | "accessory"): void {
+    this.sendMessage("equip_item", { itemId, slot });
+  }
+
+  /**
+   * Unequip an item from a slot
+   */
+  unequipItem(slot: "weapon" | "armor" | "accessory"): void {
+    this.sendMessage("unequip_item", { slot });
+  }
+
+  /**
+   * Buy an item from shop
+   */
+  buyItem(itemId: string, quantity: number = 1): void {
+    this.sendMessage("buy_item", { itemId, quantity });
+  }
+
+  /**
+   * Open a treasure chest
+   */
+  openChest(chestItemId: string): void {
+    this.sendMessage("open_chest", { chestItemId });
+  }
+
+  /**
+   * Use a consumable item
+   */
+  useConsumable(itemId: string): void {
+    this.sendMessage("use_consumable", { itemId });
+  }
 }
 
 // Export singleton instance

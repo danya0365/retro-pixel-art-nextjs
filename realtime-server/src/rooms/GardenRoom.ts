@@ -2,6 +2,7 @@ import { Client, Room } from "@colyseus/core";
 import {
   GardenPlayer,
   GardenState,
+  InventoryItemSchema,
   PlantedItem,
   WorldObject,
 } from "./schema/GardenState";
@@ -132,6 +133,39 @@ export class GardenRoom extends Room<GardenState> {
         this.handleBattleVictory(client, message);
       }
     );
+
+    // Equipment & Inventory handlers
+    this.onMessage(
+      "equip_item",
+      (
+        client,
+        message: { itemId: string; slot: "weapon" | "armor" | "accessory" }
+      ) => {
+        this.handleEquipItem(client, message);
+      }
+    );
+
+    this.onMessage(
+      "unequip_item",
+      (client, message: { slot: "weapon" | "armor" | "accessory" }) => {
+        this.handleUnequipItem(client, message);
+      }
+    );
+
+    this.onMessage(
+      "buy_item",
+      (client, message: { itemId: string; quantity: number }) => {
+        this.handleBuyItem(client, message);
+      }
+    );
+
+    this.onMessage("open_chest", (client, message: { chestItemId: string }) => {
+      this.handleOpenChest(client, message);
+    });
+
+    this.onMessage("use_consumable", (client, message: { itemId: string }) => {
+      this.handleUseConsumable(client, message);
+    });
 
     // Start game loop
     this.startGameLoop();
@@ -642,6 +676,332 @@ export class GardenRoom extends Room<GardenState> {
       mov: player.mov,
       rng: player.rng,
       highestClearedStage: player.highestClearedStage,
+    });
+  }
+
+  // ============================================
+  // Equipment & Inventory Handlers
+  // ============================================
+
+  /**
+   * Handle equip item
+   */
+  private handleEquipItem(
+    client: Client,
+    message: { itemId: string; slot: "weapon" | "armor" | "accessory" }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Check if player has the item in inventory
+    const invItem = player.inventory.find((i) => i.itemId === message.itemId);
+    if (!invItem || invItem.quantity < 1) {
+      client.send("error", { message: "ไม่มีไอเท็มนี้ในกระเป๋า" });
+      return;
+    }
+
+    // Unequip current item if any
+    const currentEquipped = player.equipment[message.slot];
+    if (currentEquipped) {
+      // Add back to inventory
+      this.addItemToInventory(player, currentEquipped, 1);
+    }
+
+    // Equip new item
+    player.equipment[message.slot] = message.itemId;
+
+    // Remove from inventory
+    this.removeItemFromInventory(player, message.itemId, 1);
+
+    // Send update to client
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `⚔️ ${player.nickname} equipped ${message.itemId} to ${message.slot}`
+    );
+  }
+
+  /**
+   * Handle unequip item
+   */
+  private handleUnequipItem(
+    client: Client,
+    message: { slot: "weapon" | "armor" | "accessory" }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    const currentEquipped = player.equipment[message.slot];
+    if (!currentEquipped) {
+      client.send("error", { message: "ไม่มีไอเท็มติดตั้งอยู่" });
+      return;
+    }
+
+    // Add back to inventory
+    this.addItemToInventory(player, currentEquipped, 1);
+
+    // Clear equipment slot
+    player.equipment[message.slot] = "";
+
+    // Send update to client
+    this.sendInventoryUpdate(client, player);
+
+    console.log(`📤 ${player.nickname} unequipped from ${message.slot}`);
+  }
+
+  /**
+   * Handle buy item from shop
+   */
+  private handleBuyItem(
+    client: Client,
+    message: { itemId: string; quantity: number }
+  ) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Item prices (simplified - should be from master data)
+    const ITEM_PRICES: Record<string, number> = {
+      chest_bronze: 100,
+      chest_silver: 500,
+      chest_gold: 2000,
+      chest_legendary: 10000,
+      potion_hp_small: 25,
+      potion_hp_medium: 80,
+      potion_mp_small: 30,
+    };
+
+    const price = ITEM_PRICES[message.itemId];
+    if (!price) {
+      client.send("error", { message: "ไอเท็มนี้ไม่สามารถซื้อได้" });
+      return;
+    }
+
+    const totalCost = price * message.quantity;
+    if (player.gold < totalCost) {
+      client.send("error", { message: "Gold ไม่เพียงพอ" });
+      return;
+    }
+
+    // Deduct gold
+    player.gold -= totalCost;
+
+    // Add item to inventory
+    this.addItemToInventory(player, message.itemId, message.quantity);
+
+    // Send update to client
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `🛒 ${player.nickname} bought ${message.quantity}x ${message.itemId} for ${totalCost} gold`
+    );
+  }
+
+  /**
+   * Handle open treasure chest
+   */
+  private handleOpenChest(client: Client, message: { chestItemId: string }) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Check if player has the chest
+    const chestItem = player.inventory.find(
+      (i) => i.itemId === message.chestItemId
+    );
+    if (!chestItem || chestItem.quantity < 1) {
+      client.send("error", { message: "ไม่มีหีบสมบัตินี้ในกระเป๋า" });
+      return;
+    }
+
+    // Chest drop tables (simplified)
+    const CHEST_DROPS: Record<
+      string,
+      { itemId: string; chance: number; min: number; max: number }[]
+    > = {
+      chest_bronze: [
+        { itemId: "weapon_wooden_sword", chance: 20, min: 1, max: 1 },
+        { itemId: "weapon_iron_sword", chance: 10, min: 1, max: 1 },
+        { itemId: "armor_cloth", chance: 20, min: 1, max: 1 },
+        { itemId: "armor_leather", chance: 10, min: 1, max: 1 },
+        { itemId: "acc_wooden_ring", chance: 15, min: 1, max: 1 },
+        { itemId: "potion_hp_small", chance: 50, min: 1, max: 3 },
+        { itemId: "mat_slime_gel", chance: 40, min: 2, max: 5 },
+      ],
+      chest_silver: [
+        { itemId: "weapon_steel_sword", chance: 15, min: 1, max: 1 },
+        { itemId: "weapon_magic_staff", chance: 15, min: 1, max: 1 },
+        { itemId: "armor_chainmail", chance: 12, min: 1, max: 1 },
+        { itemId: "acc_power_ring", chance: 10, min: 1, max: 1 },
+        { itemId: "potion_hp_medium", chance: 40, min: 1, max: 3 },
+      ],
+      chest_gold: [
+        { itemId: "weapon_flame_sword", chance: 10, min: 1, max: 1 },
+        { itemId: "weapon_ice_staff", chance: 10, min: 1, max: 1 },
+        { itemId: "armor_plate", chance: 8, min: 1, max: 1 },
+        { itemId: "acc_speed_boots", chance: 8, min: 1, max: 1 },
+        { itemId: "weapon_thunder_blade", chance: 3, min: 1, max: 1 },
+      ],
+      chest_legendary: [
+        { itemId: "weapon_thunder_blade", chance: 20, min: 1, max: 1 },
+        { itemId: "armor_dragon_scale", chance: 15, min: 1, max: 1 },
+        { itemId: "acc_dragon_amulet", chance: 15, min: 1, max: 1 },
+        { itemId: "weapon_excalibur", chance: 5, min: 1, max: 1 },
+      ],
+    };
+
+    const drops = CHEST_DROPS[message.chestItemId];
+    if (!drops) {
+      client.send("error", { message: "ไม่ใช่หีบสมบัติ" });
+      return;
+    }
+
+    // Remove chest from inventory
+    this.removeItemFromInventory(player, message.chestItemId, 1);
+
+    // Roll for drops
+    const obtainedItems: { itemId: string; quantity: number }[] = [];
+    for (const drop of drops) {
+      const roll = Math.random() * 100;
+      if (roll < drop.chance) {
+        const quantity =
+          Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
+        this.addItemToInventory(player, drop.itemId, quantity);
+        obtainedItems.push({ itemId: drop.itemId, quantity });
+      }
+    }
+
+    // Guarantee at least one item
+    if (obtainedItems.length === 0 && drops.length > 0) {
+      const randomDrop = drops[Math.floor(Math.random() * drops.length)];
+      this.addItemToInventory(player, randomDrop.itemId, 1);
+      obtainedItems.push({ itemId: randomDrop.itemId, quantity: 1 });
+    }
+
+    // Send results to client
+    client.send("chest_opened", { items: obtainedItems });
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `📦 ${player.nickname} opened ${message.chestItemId}, got: ${obtainedItems
+        .map((i) => `${i.quantity}x ${i.itemId}`)
+        .join(", ")}`
+    );
+  }
+
+  /**
+   * Handle use consumable item
+   */
+  private handleUseConsumable(client: Client, message: { itemId: string }) {
+    const player = this.state.players.find(
+      (p) => p.clientId === client.sessionId
+    );
+    if (!player) return;
+
+    // Check if player has the item
+    const invItem = player.inventory.find((i) => i.itemId === message.itemId);
+    if (!invItem || invItem.quantity < 1) {
+      client.send("error", { message: "ไม่มีไอเท็มนี้ในกระเป๋า" });
+      return;
+    }
+
+    // Consumable effects
+    const CONSUMABLE_EFFECTS: Record<
+      string,
+      { type: "heal_hp" | "heal_mp"; value: number }
+    > = {
+      potion_hp_small: { type: "heal_hp", value: 50 },
+      potion_hp_medium: { type: "heal_hp", value: 150 },
+      potion_mp_small: { type: "heal_mp", value: 30 },
+    };
+
+    const effect = CONSUMABLE_EFFECTS[message.itemId];
+    if (!effect) {
+      client.send("error", { message: "ไม่ใช่ไอเท็มที่ใช้ได้" });
+      return;
+    }
+
+    // Apply effect
+    if (effect.type === "heal_hp") {
+      player.hp = Math.min(player.hp + effect.value, player.maxHp);
+    } else if (effect.type === "heal_mp") {
+      player.mp = Math.min(player.mp + effect.value, player.maxMp);
+    }
+
+    // Remove item from inventory
+    this.removeItemFromInventory(player, message.itemId, 1);
+
+    // Send update
+    client.send("consumable_used", {
+      itemId: message.itemId,
+      effect,
+      newHp: player.hp,
+      newMp: player.mp,
+    });
+    this.sendInventoryUpdate(client, player);
+
+    console.log(
+      `💊 ${player.nickname} used ${message.itemId} (${effect.type}: +${effect.value})`
+    );
+  }
+
+  // ============================================
+  // Inventory Helper Methods
+  // ============================================
+
+  private addItemToInventory(
+    player: GardenPlayer,
+    itemId: string,
+    quantity: number
+  ) {
+    const existing = player.inventory.find((i) => i.itemId === itemId);
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      const newItem = new InventoryItemSchema();
+      newItem.itemId = itemId;
+      newItem.quantity = quantity;
+      player.inventory.push(newItem);
+    }
+  }
+
+  private removeItemFromInventory(
+    player: GardenPlayer,
+    itemId: string,
+    quantity: number
+  ) {
+    const existing = player.inventory.find((i) => i.itemId === itemId);
+    if (existing) {
+      existing.quantity -= quantity;
+      if (existing.quantity <= 0) {
+        const index = player.inventory.indexOf(existing);
+        player.inventory.splice(index, 1);
+      }
+    }
+  }
+
+  private sendInventoryUpdate(client: Client, player: GardenPlayer) {
+    // Convert inventory to plain object array
+    const inventory = player.inventory.map((i) => ({
+      itemId: i.itemId,
+      quantity: i.quantity,
+    }));
+
+    // Send full inventory sync
+    client.send("inventory_synced", {
+      inventory,
+      equipment: {
+        weapon: player.equipment.weapon || null,
+        armor: player.equipment.armor || null,
+        accessory: player.equipment.accessory || null,
+      },
+      gold: player.gold,
     });
   }
 }

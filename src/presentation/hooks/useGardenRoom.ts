@@ -290,6 +290,29 @@ export function useGardenRoom({
         syncStatsFromServer(data);
       });
 
+      // ✅ รับ inventory sync จาก server
+      room.onMessage("inventory_synced", (data) => {
+        console.log("📥 Inventory synced from server:", data);
+        const { syncInventoryFromServer } = useCharacterStore.getState();
+        syncInventoryFromServer(data);
+      });
+
+      // ✅ รับผลเปิดหีบสมบัติ
+      room.onMessage("chest_opened", (data) => {
+        console.log("📦 Chest opened, got items:", data.items);
+        // Could dispatch to UI notification system here
+      });
+
+      // ✅ รับผลใช้ consumable
+      room.onMessage("consumable_used", (data) => {
+        console.log("💊 Consumable used:", data);
+      });
+
+      // ✅ รับ error จาก server
+      room.onMessage("error", (data) => {
+        console.error("❌ Server error:", data.message);
+      });
+
       // Handle disconnect
       room.onLeave((code) => {
         console.log("👋 Left garden room:", code);
