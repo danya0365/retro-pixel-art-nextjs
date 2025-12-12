@@ -86,7 +86,7 @@ export function SimpleGameView({
   const [logs, setLogs] = useState<string[]>([
     "🎮 ยินดีต้อนรับสู่ Retro Pixel Garden!",
   ]);
-  const [highestClearedStage, setHighestClearedStage] = useState(0);
+  // ✅ highestClearedStage ใช้จาก server (localPlayer.highestClearedStage)
   const [currentBattle, setCurrentBattle] = useState<BattleStage | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<GardenPlayer | null>(
     null
@@ -424,10 +424,7 @@ export function SimpleGameView({
                       setCurrentBattle(null);
                     }}
                     onVictory={(rewards) => {
-                      // Update highest cleared stage
-                      if (currentBattle.id > highestClearedStage) {
-                        setHighestClearedStage(currentBattle.id);
-                      }
+                      // ✅ Server จะ update highestClearedStage เอง
                       addLog(
                         `🎉 ชนะ ${currentBattle.name}! +${rewards.exp} EXP, +${rewards.gold} Gold`
                       );
@@ -435,7 +432,7 @@ export function SimpleGameView({
                   />
                 ) : (
                   <MonsterHunting
-                    highestClearedStage={highestClearedStage}
+                    highestClearedStage={localPlayer?.highestClearedStage ?? 0}
                     onStartBattle={(stage) => {
                       setCurrentBattle(stage);
                       addLog(`⚔️ เริ่มต่อสู้ ${stage.name}!`);

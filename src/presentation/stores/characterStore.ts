@@ -87,6 +87,9 @@ export interface CharacterState {
 
   // Currency
   gold: number;
+
+  // Progress
+  highestClearedStage: number;
 }
 
 // ============================================
@@ -222,7 +225,10 @@ interface CharacterStore {
   learnSkill: (skillId: string) => void;
   // ✅ Sync stats from server (Single Source of Truth)
   syncStatsFromServer: (
-    stats: Partial<CharacterStats> & { gold?: number }
+    stats: Partial<CharacterStats> & {
+      gold?: number;
+      highestClearedStage?: number;
+    }
   ) => void;
 }
 
@@ -271,6 +277,7 @@ const DEFAULT_CHARACTER: CharacterState = {
   },
   skills: ["basic_attack"],
   gold: 100,
+  highestClearedStage: 0,
 };
 
 // ============================================
@@ -317,6 +324,7 @@ export const useCharacterStore = create<CharacterStore>()(
             totalStats: calculateTotalStats(baseStats, equipment),
             skills: ["basic_attack"],
             gold: 100,
+            highestClearedStage: 0,
           },
         });
       },
@@ -549,12 +557,17 @@ export const useCharacterStore = create<CharacterStore>()(
         if (stats.mov !== undefined) newBaseStats.mov = stats.mov;
         if (stats.rng !== undefined) newBaseStats.rng = stats.rng;
 
+        // Update highestClearedStage
+        const newHighestClearedStage =
+          stats.highestClearedStage ?? character.highestClearedStage;
+
         set({
           character: {
             ...character,
             baseStats: newBaseStats,
             totalStats: calculateTotalStats(newBaseStats, character.equipment),
             gold: newGold,
+            highestClearedStage: newHighestClearedStage,
           },
         });
 
@@ -562,6 +575,7 @@ export const useCharacterStore = create<CharacterStore>()(
           level: newBaseStats.level,
           exp: newBaseStats.exp,
           gold: newGold,
+          highestClearedStage: newHighestClearedStage,
         });
       },
     }),

@@ -163,7 +163,7 @@ export function useGardenRoom({
           gold: characterState.gold,
           mov: characterState.totalStats.mov,
           rng: characterState.totalStats.rng,
-          highestClearedStage: 0,
+          highestClearedStage: characterState.highestClearedStage ?? 0,
         },
       };
 
