@@ -1,4 +1,5 @@
 import { MainLayout } from "@/src/presentation/components/layout/MainLayout";
+import { LayoutProvider } from "@/src/presentation/contexts/LayoutContext";
 import { ThemeProvider } from "@/src/presentation/providers/ThemeProvider";
 import type { Metadata } from "next";
 import "../public/styles/index.css";
@@ -18,12 +19,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider>
-          <MainLayout
-            title="Retro Pixel Garden - Microsoft Internet Explorer"
-            address="http://retro-pixel-garden.local/"
-          >
-            {children}
-          </MainLayout>
+          <LayoutProvider>
+            <MainLayout
+              title="Retro Pixel Garden - Microsoft Internet Explorer"
+              address="http://retro-pixel-garden.local/"
+            >
+              {children}
+            </MainLayout>
+          </LayoutProvider>
         </ThemeProvider>
       </body>
     </html>

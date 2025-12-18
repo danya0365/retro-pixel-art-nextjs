@@ -3,9 +3,13 @@
 import { NotificationToast } from "@/src/presentation/components/ui/NotificationToast";
 import { CreateUserModal } from "@/src/presentation/components/user/CreateUserModal";
 import { useGardenRoom } from "@/src/presentation/hooks/useGardenRoom";
+import {
+  layoutPresets,
+  useLayoutSetup,
+} from "@/src/presentation/hooks/useLayoutSetup";
 import { useIsHydrated, useUser } from "@/src/presentation/stores/userStore";
 import { Gamepad2, Loader2, Monitor } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GameCanvas } from "./GameCanvas";
 import { GameUI } from "./GameUI";
 import { RoomSelector } from "./RoomSelector";
@@ -97,6 +101,15 @@ function GameWithMultiplayer({
   const user = useUser()!;
   const [isSimpleMode, setIsSimpleMode] = useState(true);
 
+  // Configure layout for game page
+  const { setConfig } = useLayoutSetup({
+    ...layoutPresets.game,
+    toolbar: {
+      ...layoutPresets.game.toolbar,
+      onBack: onBack, // Custom back to go to room selector
+    },
+  });
+
   const {
     isConnected,
     isConnecting,
@@ -116,6 +129,20 @@ function GameWithMultiplayer({
     roomId: roomId || undefined,
     createNew,
   });
+
+  // Update layout status based on connection
+  useEffect(() => {
+    setConfig({
+      status: isConnecting
+        ? "Connecting..."
+        : isConnected
+        ? "Connected"
+        : error
+        ? "Error"
+        : "Ready",
+      connected: isConnected,
+    });
+  }, [isConnected, isConnecting, error, setConfig]);
 
   // Show connection error
   if (error) {

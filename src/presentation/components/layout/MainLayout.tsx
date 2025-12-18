@@ -1,6 +1,8 @@
 "use client";
 
+import { useLayoutContext } from "@/src/presentation/contexts/LayoutContext";
 import { Minus, Square, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { type ReactNode } from "react";
 import { AddressBar } from "./AddressBar";
 import { Footer } from "./Footer";
@@ -10,17 +12,16 @@ interface MainLayoutProps {
   children: ReactNode;
   title?: string;
   address?: string;
-  status?: string;
-  connected?: boolean;
 }
 
 export function MainLayout({
   children,
   title = "Retro Pixel Garden - Microsoft Internet Explorer",
   address = "http://retro-pixel-garden.local/",
-  status = "Done",
-  connected = false,
 }: MainLayoutProps) {
+  const router = useRouter();
+  const { config } = useLayoutContext();
+  const { titleBar, status, connected } = config;
   return (
     <div className="retro-browser">
       {/* Title Bar */}
@@ -38,18 +39,45 @@ export function MainLayout({
         </div>
         <span className="retro-titlebar-text">{title}</span>
         <div className="retro-titlebar-controls">
-          <button className="retro-titlebar-button" title="Minimize">
-            <Minus size={10} />
-          </button>
-          <button className="retro-titlebar-button" title="Maximize">
-            <Square size={8} />
-          </button>
-          <button
-            className="retro-titlebar-button retro-titlebar-close"
-            title="Close"
-          >
-            <X size={10} />
-          </button>
+          {titleBar.showMinimize && (
+            <button
+              className="retro-titlebar-button"
+              title="Minimize"
+              onClick={
+                titleBar.onMinimize ||
+                (() => alert("Minimize not supported in browser"))
+              }
+            >
+              <Minus size={10} />
+            </button>
+          )}
+          {titleBar.showMaximize && (
+            <button
+              className="retro-titlebar-button"
+              title="Maximize"
+              onClick={
+                titleBar.onMaximize ||
+                (() => {
+                  if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                  } else {
+                    document.documentElement.requestFullscreen();
+                  }
+                })
+              }
+            >
+              <Square size={8} />
+            </button>
+          )}
+          {titleBar.showClose && (
+            <button
+              className="retro-titlebar-button retro-titlebar-close"
+              title="Close"
+              onClick={titleBar.onClose || (() => router.push("/"))}
+            >
+              <X size={10} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -65,7 +93,7 @@ export function MainLayout({
       </div>
 
       {/* Status Bar / Footer */}
-      <Footer status={status} connected={connected} />
+      <Footer status={status || "Done"} connected={connected || false} />
     </div>
   );
 }

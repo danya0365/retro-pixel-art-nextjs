@@ -1,22 +1,42 @@
 "use client";
 
+import { useLayoutContext } from "@/src/presentation/contexts/LayoutContext";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface AddressBarProps {
   address?: string;
-  onNavigate?: (address: string) => void;
 }
 
 export function AddressBar({
   address = "http://retro-pixel-garden.local/",
-  onNavigate,
 }: AddressBarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { config } = useLayoutContext();
+  const { addressBar } = config;
+
+  // Update address bar based on current pathname
+  const currentUrl = `http://retro-pixel-garden.local${pathname}`;
   const [inputValue, setInputValue] = useState(address);
 
+  useEffect(() => {
+    setInputValue(currentUrl);
+  }, [currentUrl]);
+
   const handleGo = () => {
-    if (onNavigate) {
-      onNavigate(inputValue);
+    if (addressBar.onNavigate) {
+      addressBar.onNavigate(inputValue);
+    } else {
+      // Default: try to navigate to the path
+      try {
+        const url = new URL(inputValue);
+        router.push(url.pathname);
+      } catch {
+        // If not a valid URL, treat as path
+        router.push(inputValue.startsWith("/") ? inputValue : `/${inputValue}`);
+      }
     }
   };
 
@@ -52,14 +72,21 @@ export function AddressBar({
           <ChevronDown size={12} />
         </button>
       </div>
-      <button className="retro-addressbar-go" onClick={handleGo}>
-        <ChevronRight size={14} />
-        <span>Go</span>
-      </button>
-      <button className="retro-addressbar-links">
-        Links
-        <ChevronRight size={12} />
-      </button>
+      {addressBar.showGoButton !== false && (
+        <button className="retro-addressbar-go" onClick={handleGo}>
+          <ChevronRight size={14} />
+          <span>Go</span>
+        </button>
+      )}
+      {addressBar.showLinksButton && (
+        <button
+          className="retro-addressbar-links"
+          onClick={addressBar.onLinksClick}
+        >
+          Links
+          <ChevronRight size={12} />
+        </button>
+      )}
     </div>
   );
 }

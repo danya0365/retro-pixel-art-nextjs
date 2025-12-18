@@ -1,9 +1,15 @@
 "use client";
 
+import {
+  layoutPresets,
+  useLayoutSetup,
+} from "@/src/presentation/hooks/useLayoutSetup";
 import { Gamepad2, Sparkles, TreeDeciduous, Users } from "lucide-react";
 import Link from "next/link";
 
 export function LandingView() {
+  // Configure layout for landing page - minimal toolbar
+  useLayoutSetup(layoutPresets.landing);
   return (
     <div className="min-h-full bg-[var(--win98-content-bg)] p-4 retro-text">
       {/* Hero Section */}
