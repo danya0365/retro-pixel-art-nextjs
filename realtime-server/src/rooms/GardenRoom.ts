@@ -758,6 +758,14 @@ export class GardenRoom extends Room<GardenState> {
     // Send update to client
     this.sendInventoryUpdate(client, player);
 
+    // Send success message
+    client.send("equipment_action_success", {
+      action: "equip",
+      itemId: message.itemId,
+      slot: message.slot,
+      message: `สวมใส่ ${message.itemId} สำเร็จ! ⚔️`,
+    });
+
     console.log(
       `⚔️ ${player.nickname} equipped ${message.itemId} to ${message.slot}`
     );
@@ -789,6 +797,13 @@ export class GardenRoom extends Room<GardenState> {
 
     // Send update to client
     this.sendInventoryUpdate(client, player);
+
+    // Send success message
+    client.send("equipment_action_success", {
+      action: "unequip",
+      slot: message.slot,
+      message: `ถอด ${currentEquipped} ออกแล้ว! 📤`,
+    });
 
     console.log(`📤 ${player.nickname} unequipped from ${message.slot}`);
   }
@@ -894,6 +909,15 @@ export class GardenRoom extends Room<GardenState> {
 
     // Send update to client
     this.sendInventoryUpdate(client, player);
+
+    // Send success message
+    client.send("shop_action_success", {
+      action: "buy",
+      itemId: message.itemId,
+      quantity: message.quantity,
+      totalCost,
+      message: `ซื้อ ${message.itemId} x${message.quantity} สำเร็จ! 🛒`,
+    });
 
     console.log(
       `🛒 ${player.nickname} bought ${message.quantity}x ${message.itemId} for ${totalCost} gold`
@@ -1041,6 +1065,9 @@ export class GardenRoom extends Room<GardenState> {
       effect,
       newHp: player.hp,
       newMp: player.mp,
+      message: `ใช้ไอเท็มสำเร็จ! ${
+        effect.type === "heal_hp" ? "❤️ HP" : "💙 MP"
+      } +${effect.value}`,
     });
     this.sendInventoryUpdate(client, player);
 

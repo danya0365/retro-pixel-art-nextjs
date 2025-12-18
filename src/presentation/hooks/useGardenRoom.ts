@@ -300,12 +300,27 @@ export function useGardenRoom({
       // ✅ รับผลเปิดหีบสมบัติ
       room.onMessage("chest_opened", (data) => {
         console.log("📦 Chest opened, got items:", data.items);
-        // Could dispatch to UI notification system here
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showSuccess }) => {
+            const itemNames = data.items
+              .map(
+                (i: { itemId: string; quantity: number }) =>
+                  `${i.itemId} x${i.quantity}`
+              )
+              .join(", ");
+            showSuccess(`📦 เปิดหีบได้: ${itemNames}`);
+          }
+        );
       });
 
       // ✅ รับผลใช้ consumable
       room.onMessage("consumable_used", (data) => {
         console.log("💊 Consumable used:", data);
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showSuccess }) => {
+            showSuccess(data.message);
+          }
+        );
       });
 
       // รับ error จาก server
@@ -329,6 +344,26 @@ export function useGardenRoom({
       // รับ pet action success จาก server
       room.onMessage("pet_action_success", (data) => {
         console.log("✅ Pet action success:", data);
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showSuccess }) => {
+            showSuccess(data.message);
+          }
+        );
+      });
+
+      // รับ shop action success จาก server
+      room.onMessage("shop_action_success", (data) => {
+        console.log("🛒 Shop action success:", data);
+        import("@/src/presentation/stores/notificationStore").then(
+          ({ showSuccess }) => {
+            showSuccess(data.message);
+          }
+        );
+      });
+
+      // รับ equipment action success จาก server
+      room.onMessage("equipment_action_success", (data) => {
+        console.log("⚔️ Equipment action success:", data);
         import("@/src/presentation/stores/notificationStore").then(
           ({ showSuccess }) => {
             showSuccess(data.message);
