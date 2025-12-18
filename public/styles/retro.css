@@ -655,3 +655,184 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
+/* ============================================
+   RETRO DROPDOWN MENU
+   ============================================ */
+
+.retro-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.retro-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background: var(--win98-menu-bg);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  padding: 2px;
+}
+
+.retro-dropdown-right {
+  left: auto;
+  right: 0;
+}
+
+.retro-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 4px 24px 4px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--win98-button-text);
+  text-align: left;
+  gap: 8px;
+}
+
+.retro-dropdown-item:hover:not(.disabled) {
+  background: var(--win98-menu-highlight);
+  color: var(--win98-menu-highlight-text);
+}
+
+.retro-dropdown-item.disabled {
+  color: var(--win98-button-shadow);
+  cursor: not-allowed;
+}
+
+.retro-dropdown-item-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.retro-dropdown-item-label {
+  flex: 1;
+}
+
+.retro-dropdown-item-shortcut {
+  color: var(--win98-button-shadow);
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.retro-dropdown-item:hover:not(.disabled) .retro-dropdown-item-shortcut {
+  color: var(--win98-menu-highlight-text);
+  opacity: 0.7;
+}
+
+.retro-dropdown-separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--win98-button-shadow) 0%,
+    var(--win98-button-shadow) 50%,
+    var(--win98-button-highlight) 50%,
+    var(--win98-button-highlight) 100%
+  );
+}
+
+/* Active menu item state */
+.retro-menu-item.active {
+  background: var(--win98-menu-highlight);
+  color: var(--win98-menu-highlight-text);
+}
+
+/* ============================================
+   RETRO MODAL / DIALOG
+   ============================================ */
+
+.retro-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.retro-modal {
+  display: flex;
+  flex-direction: column;
+  background: var(--win98-window-bg);
+  border: 2px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.retro-modal-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  background: var(--win98-titlebar-active);
+  padding: 2px 3px;
+  flex-shrink: 0;
+}
+
+.retro-modal-titlebar-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-modal-icon {
+  font-size: 14px;
+}
+
+.retro-modal-title {
+  color: var(--win98-titlebar-text);
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.retro-modal-close {
+  width: 16px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--win98-button-face);
+  border: 1px solid;
+  border-color: var(--win98-button-highlight) var(--win98-button-dark-shadow)
+    var(--win98-button-dark-shadow) var(--win98-button-highlight);
+  cursor: pointer;
+}
+
+.retro-modal-close:hover {
+  background: #c0504d;
+}
+
+.retro-modal-close:active {
+  border-color: var(--win98-button-dark-shadow) var(--win98-button-highlight)
+    var(--win98-button-highlight) var(--win98-button-dark-shadow);
+}
+
+.retro-modal-content {
+  flex: 1;
+  overflow: auto;
+  background: var(--win98-window-bg);
+}
+
+.retro-modal-actions {
+  padding: 8px 12px;
+  background: var(--win98-window-bg);
+  border-top: 1px solid var(--win98-button-shadow);
+}

@@ -17,13 +17,19 @@ export function AddressBar({
   const { config } = useLayoutContext();
   const { addressBar } = config;
 
-  // Update address bar based on current pathname
-  const currentUrl = `http://retro-pixel-garden.local${pathname}`;
+  // Use real browser URL
   const [inputValue, setInputValue] = useState(address);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setInputValue(currentUrl);
-  }, [currentUrl]);
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && typeof window !== "undefined") {
+      setInputValue(window.location.href);
+    }
+  }, [isClient, pathname]);
 
   const handleGo = () => {
     if (addressBar.onNavigate) {

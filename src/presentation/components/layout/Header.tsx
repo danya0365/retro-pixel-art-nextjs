@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import { MenuBar } from "./MenuBar";
 
 interface ToolbarButtonProps {
   icon: React.ReactNode;
@@ -53,26 +54,7 @@ export function Header() {
   return (
     <div className="retro-header">
       {/* Menu Bar */}
-      <div className="retro-menubar">
-        <button className="retro-menu-item">
-          <span className="underline">F</span>ile
-        </button>
-        <button className="retro-menu-item">
-          <span className="underline">E</span>dit
-        </button>
-        <button className="retro-menu-item">
-          <span className="underline">V</span>iew
-        </button>
-        <button className="retro-menu-item">
-          F<span className="underline">a</span>vorites
-        </button>
-        <button className="retro-menu-item">
-          <span className="underline">T</span>ools
-        </button>
-        <button className="retro-menu-item">
-          <span className="underline">H</span>elp
-        </button>
-      </div>
+      <MenuBar onPrint={toolbar.onPrint || (() => window.print())} />
 
       {/* Toolbar */}
       <div className="retro-toolbar">
